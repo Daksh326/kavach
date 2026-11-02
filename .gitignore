@@ -39,3 +39,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cloudflare / opennext
+.open-next/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# env (keep the example)
+!.env.example
+
+# supabase
+supabase/.branches
+supabase/.temp
+
+# next-intl generated declaration
+messages/*.d.json.ts

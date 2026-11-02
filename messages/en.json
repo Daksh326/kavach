@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "title": "Kavach — scam help for India",
+    "description": "Got scammed or received a suspicious call, message or payment request? Get step-by-step help, check numbers and UPI IDs, and report scams."
+  },
+  "common": {
+    "appName": "Kavach",
+    "skipToContent": "Skip to main content",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "dashboard": "My reports",
+    "switchLanguage": "हिन्दी",
+    "switchLanguageLabel": "हिन्दी में देखें",
+    "backHome": "Back to home",
+    "helpline": "Cyber fraud helpline: call 1930"
+  },
+  "home": {
+    "title": "Got scammed? Act in the first hour.",
+    "subtitle": "Call 1930 right away if money has left your account. Kavach then helps you check numbers and links, and report the scam.",
+    "call1930": "Call 1930 now",
+    "comingSoon": "The emergency checklist, number lookup and scam checker are being built."
+  },
+  "auth": {
+    "title": "Sign in to Kavach",
+    "subtitle": "Sign in to save your report, track its status and download your complaint.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Send me a code",
+    "sending": "Sending…",
+    "codeSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
+    "codeLabel": "6-digit code",
+    "verify": "Sign in",
+    "verifying": "Checking…",
+    "changeEmail": "Use a different email",
+    "or": "or",
+    "google": "Continue with Google",
+    "neverShare": "Kavach will never call you or ask for this code. Anyone who asks for it is a scammer.",
+    "errors": {
+      "invalidEmail": "Enter a valid email address.",
+      "invalidCode": "Enter the 6-digit code from the email.",
+      "wrongCode": "That code is wrong or has expired. Check the latest email or ask for a new code.",
+      "tooManyAttempts": "Too many attempts. Please wait a minute and try again.",
+      "oauthFailed": "Google sign-in did not complete. Please try again or use email.",
+      "serviceUnavailable": "We can't reach our sign-in service right now. Please try again in a moment."
+    }
+  },
+  "dashboard": {
+    "title": "My reports",
+    "signedInAs": "Signed in as {email}",
+    "empty": "You have not saved any reports yet."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This page does not exist. If you need help with a scam, start from the home page."
+  }
+}

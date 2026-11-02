@@ -1,0 +1,5 @@
+# Secrets for `pnpm cf:preview` (wrangler dev on the built worker).
+# Copy to .dev.vars (git-ignored). Same names as .env.example's server-only vars.
+NEXTJS_ENV=development
+SUPABASE_SECRET_KEY=sb_secret_xxx
+CRON_SECRET=

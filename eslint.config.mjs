@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated files
+    "cloudflare-env.d.ts",
+    "src/lib/supabase/database.types.ts",
+    "messages/*.d.json.ts",
+    ".open-next/**",
+    ".wrangler/**",
   ]),
 ]);
 

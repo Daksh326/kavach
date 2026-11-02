@@ -1,3 +1,8 @@
-ignoredBuiltDependencies:
+# pnpm 10 blocks dependency build scripts by default. Allow only the ones
+# that need to download native binaries.
+onlyBuiltDependencies:
+  - esbuild
+  - supabase
+  - workerd
   - sharp
   - unrs-resolver

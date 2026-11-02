@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kavach",
+  // Wraps the OpenNext worker to add the Cron Trigger handler.
+  "main": "custom-worker.ts",
+  "compatibility_date": "2026-10-27",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      // Self-reference: lets the cron handler call /api/cron/daily internally.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "kavach",
+    },
+  ],
+  "r2_buckets": [
+    {
+      // Private evidence bucket. Never make it public.
+      "binding": "EVIDENCE_BUCKET",
+      "bucket_name": "kavach-evidence",
+    },
+  ],
+  "triggers": {
+    // 21:30 UTC = 03:00 IST. Daily maintenance + keeps the Supabase free project active.
+    "crons": ["30 21 * * *"],
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "upload_source_maps": true,
+  // Secrets (SUPABASE_SECRET_KEY, CRON_SECRET, ...) are set with
+  // `wrangler secret put`, never here. See .env.example.
+}
