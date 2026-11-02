@@ -7,6 +7,10 @@ const intl = createIntlMiddleware(routing);
 
 /** Routes that need a signed-in user (locale prefix stripped). */
 const PROTECTED_PREFIXES = ["/dashboard", "/admin"];
+/** /report/<id> is private; /report itself (the wizard) is public. */
+const isProtected = (path: string) =>
+  PROTECTED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`)) ||
+  /^\/report\/[^/]+/.test(path);
 
 function splitLocale(pathname: string) {
   const [, first, ...rest] = pathname.split("/");
@@ -27,7 +31,7 @@ export async function proxy(request: NextRequest) {
   // Fast path for signed-out visitors on protected pages: a real 307 to
   // /login before any rendering. The page's DAL check stays the actual
   // security boundary; this only avoids a wasted render.
-  if (!signedIn && PROTECTED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {
+  if (!signedIn && isProtected(path)) {
     const url = new URL(`/${locale}/login`, request.url);
     url.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(url);

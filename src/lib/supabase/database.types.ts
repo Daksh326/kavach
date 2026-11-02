@@ -302,6 +302,7 @@ export type Database = {
           incident_date: string | null;
           payment_method: Database["public"]["Enums"]["payment_method"] | null;
           status: Database["public"]["Enums"]["report_status"];
+          transaction_ref: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -319,6 +320,7 @@ export type Database = {
           incident_date?: string | null;
           payment_method?: Database["public"]["Enums"]["payment_method"] | null;
           status?: Database["public"]["Enums"]["report_status"];
+          transaction_ref?: string | null;
           updated_at?: string;
           user_id: string;
         };
@@ -335,6 +337,7 @@ export type Database = {
           incident_date?: string | null;
           payment_method?: Database["public"]["Enums"]["payment_method"] | null;
           status?: Database["public"]["Enums"]["report_status"];
+          transaction_ref?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -367,6 +370,13 @@ export type Database = {
           p_value: string;
         };
         Returns: string;
+      };
+      get_report_identifiers: {
+        Args: { p_report_id: string };
+        Returns: {
+          type: Database["public"]["Enums"]["identifier_type"];
+          value_normalized: string;
+        }[];
       };
       lookup_identifier: {
         Args: { p_type: Database["public"]["Enums"]["identifier_type"]; p_value: string };

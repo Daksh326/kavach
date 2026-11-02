@@ -1,4 +1,4 @@
-import { ChevronRight, Phone, Siren } from "lucide-react";
+import { ChevronRight, FilePen, Phone, Siren } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { CheckForm } from "@/components/check/check-form";
@@ -29,6 +29,13 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <span className="block text-sm opacity-90">{t("scammedHint")}</span>
           </span>
           <ChevronRight className="size-6 shrink-0" aria-hidden />
+        </Link>
+        <Link
+          href="/report"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-primary font-semibold text-primary"
+        >
+          <FilePen className="size-5" aria-hidden />
+          {t("reportButton")}
         </Link>
         <a
           href="tel:1930"

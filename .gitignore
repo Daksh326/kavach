@@ -56,3 +56,6 @@ supabase/.temp
 
 # next-intl generated declaration
 messages/*.d.json.ts
+
+# R2 CORS file with your real origin (template: r2-cors.example.json)
+r2-cors.json

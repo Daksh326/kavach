@@ -24,6 +24,13 @@ export async function CheckResult({
   ]);
 
   const reported = hits.filter((h) => h.isReported);
+  // Prefill the report wizard with what was checked (scammer identifier, not personal data).
+  const main = hits[0];
+  const prefillType =
+    main?.type === "phone" || main?.type === "upi" || main?.type === "email" || main?.type === "url"
+      ? main.type
+      : null;
+  const reportPrefill = prefillType ? { type: prefillType, value: main.value } : null;
   const maxCount = Math.max(0, ...reported.map((h) => h.reporterCount));
   const date = (iso: string) =>
     format.dateTime(new Date(iso), { day: "numeric", month: "short", year: "numeric" });
@@ -131,6 +138,18 @@ export async function CheckResult({
           </li>
         ))}
       </ul>
+
+      {reportPrefill && (
+        <div className="space-y-2 rounded-xl border bg-card p-4">
+          <p className="text-sm">{t("reportCtaHint")}</p>
+          <Link
+            href={{ pathname: "/report", query: reportPrefill }}
+            className="flex h-12 items-center justify-center rounded-lg border-2 border-primary font-semibold text-primary"
+          >
+            {t("reportCta")}
+          </Link>
+        </div>
+      )}
 
       {similar.length > 0 && (
         <div className="space-y-2 rounded-xl border border-warning/50 bg-warning/5 p-4">

@@ -15,7 +15,8 @@
     "helpline": "Cyber fraud helpline: call 1930",
     "emergency": "Emergency steps",
     "check": "Check",
-    "call1930": "Call 1930"
+    "call1930": "Call 1930",
+    "reportScam": "Report a scam"
   },
   "home": {
     "title": "Scammed, or got a suspicious message?",
@@ -30,7 +31,8 @@
     "analysePlaceholder": "Paste the message here",
     "analyseButton": "Check this message",
     "analyseNotice": "Messages are checked by an AI service. Never paste OTPs, PINs or passwords.",
-    "analyseEmpty": "Paste a message first."
+    "analyseEmpty": "Paste a message first.",
+    "reportButton": "Report a scam and get complaint text"
   },
   "auth": {
     "title": "Sign in to Kavach",
@@ -59,7 +61,22 @@
   "dashboard": {
     "title": "My reports",
     "signedInAs": "Signed in as {email}",
-    "empty": "You have not saved any reports yet."
+    "empty": "You have not saved any reports yet.",
+    "intro": "Your reports are private. Only you can see them.",
+    "newReport": "Report a scam",
+    "reportedOn": "Reported on {date}",
+    "noAmount": "No money lost",
+    "privacyTitle": "Your data",
+    "exportTitle": "Download my data",
+    "exportBody": "Get a copy of everything you've given Kavach as a file. Links to your evidence files inside it work for 15 minutes.",
+    "exportButton": "Download my data",
+    "deleteTitle": "Delete my account and data",
+    "deleteBody": "This permanently deletes your account, all your reports and evidence files. Scammer details you reported stop counting toward public warnings. This can't be undone.",
+    "deleteTypeToConfirm": "Type {word} to confirm",
+    "deleteWord": "DELETE",
+    "deleteButton": "Delete everything",
+    "deleting": "Deleting…",
+    "deleteFailed": "We couldn't delete your data right now. Please try again."
   },
   "notFound": {
     "title": "Page not found",
@@ -139,8 +156,9 @@
       }
     },
     "nextTitle": "Next: warn others",
-    "nextBody": "Check the scammer's number, UPI ID or link to see if others reported it too.",
-    "nextAction": "Check a number or link"
+    "nextBody": "Report the scam to get complaint text for the police and your bank, and to warn others. You can also check if others reported the same number.",
+    "nextAction": "Check a number or link",
+    "reportAction": "Report the scam"
   },
   "check": {
     "metaTitle": "Check a number, UPI ID or link",
@@ -193,7 +211,9 @@
     "similarHint": "Scam sites often differ from real ones by a letter or two.",
     "similarCount": "{count, plural, one {# report} other {# reports}}",
     "emergencyCta": "I've lost money. What do I do?",
-    "disclaimer": "Kavach shows what users have reported to help people stay safe. Reports are not verified and are not proof that anyone committed a crime."
+    "disclaimer": "Kavach shows what users have reported to help people stay safe. Reports are not verified and are not proof that anyone committed a crime.",
+    "reportCta": "Report it",
+    "reportCtaHint": "Were you contacted from this? Report it so others are warned."
   },
   "analyse": {
     "metaTitle": "Is this message a scam?",
@@ -228,5 +248,203 @@
     "app": "App",
     "in_person": "In person",
     "other": "Other"
+  },
+  "paymentMethods": {
+    "upi": "UPI",
+    "bank_transfer": "Bank transfer (NEFT/IMPS/RTGS)",
+    "debit_card": "Debit card",
+    "credit_card": "Credit card",
+    "wallet": "Wallet (Paytm etc.)",
+    "net_banking": "Net banking",
+    "cash": "Cash",
+    "crypto": "Crypto",
+    "gift_card": "Gift card / voucher",
+    "other": "Other",
+    "none": "None"
+  },
+  "statuses": {
+    "draft": "Not filed yet",
+    "filed_1930": "Called 1930",
+    "filed_portal": "Filed on cybercrime.gov.in",
+    "bank_contacted": "Bank contacted",
+    "resolved": "Resolved"
+  },
+  "report": {
+    "metaTitle": "Report a scam",
+    "title": "Report a scam",
+    "intro": "Takes about 5 minutes. Your answers are saved on this phone until you submit.",
+    "stepOf": "Step {current} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "draftRestored": "We restored the answers you saved earlier.",
+    "startOver": "Start over",
+    "steps": {
+      "what": {
+        "title": "What happened?",
+        "categoryLabel": "What kind of scam was it?",
+        "descriptionLabel": "Describe what happened (optional)",
+        "descriptionHint": "Who contacted you, what they said and what you did. Don't write OTPs, PINs or passwords."
+      },
+      "channel": {
+        "title": "How did they contact you?"
+      },
+      "identifiers": {
+        "title": "The scammer's details",
+        "hint": "Add the phone number, UPI ID, link, email or account they used. This is what warns other people.",
+        "add": "Add a detail",
+        "addAnother": "Add another",
+        "typeLabel": "Type",
+        "valueLabel": "Details",
+        "platformLabel": "Platform",
+        "remove": "Remove",
+        "empty": "No details added yet. You can still continue.",
+        "types": {
+          "phone": "Phone number",
+          "upi": "UPI ID",
+          "url": "Website or link",
+          "email": "Email",
+          "social": "Social media account",
+          "bank_ifsc": "Bank IFSC code"
+        },
+        "placeholders": {
+          "phone": "98765 43210",
+          "upi": "name@ybl",
+          "url": "https://…",
+          "email": "name@example.com",
+          "social": "@username",
+          "bank_ifsc": "SBIN0001234"
+        },
+        "platforms": {
+          "instagram": "Instagram",
+          "facebook": "Facebook",
+          "telegram": "Telegram",
+          "x": "X (Twitter)",
+          "youtube": "YouTube",
+          "linkedin": "LinkedIn",
+          "snapchat": "Snapchat",
+          "sharechat": "ShareChat",
+          "other": "Other"
+        }
+      },
+      "money": {
+        "title": "Money and date",
+        "dateLabel": "When did it happen?",
+        "lostMoneyLabel": "Did you lose money?",
+        "yes": "Yes",
+        "no": "No",
+        "amountLabel": "Amount lost (₹)",
+        "methodLabel": "How did you pay?",
+        "methodPlaceholder": "Choose…",
+        "last4Label": "Last 4 digits of YOUR bank account (optional)",
+        "last4Hint": "Only the last 4 digits. Never type your full account number.",
+        "txnLabel": "Transaction ID / UTR (optional)",
+        "txnHint": "You'll find it in your bank SMS or in the UPI app's payment history."
+      },
+      "evidence": {
+        "title": "Evidence",
+        "hint": "Add screenshots, call recordings or documents. Up to 10 files, 10 MB each.",
+        "add": "Add files",
+        "processing": "Preparing {name}…",
+        "remove": "Remove",
+        "tooBig": "{name} is larger than 10 MB.",
+        "badType": "{name} isn't a supported file type.",
+        "tooMany": "You can add up to 10 files.",
+        "privateNote": "Files are private: only you can see them. They are uploaded only after you submit.",
+        "empty": "No files added. You can add them later too."
+      },
+      "consent": {
+        "title": "Your consent",
+        "purposeTitle": "How we use your report",
+        "purpose1": "We store your report privately. Only you can see it.",
+        "purpose2": "The scammer's details (phone number, UPI ID, links) go into a shared database. When 2 or more people report the same detail, others can see that it was reported. Your name, email and files are never shown.",
+        "purpose3": "We turn your report into complaint text you can file with the police and your bank. We don't file anything for you.",
+        "purpose4": "You can download or delete all your data at any time from “My reports”.",
+        "checkbox": "I agree to Kavach storing and using my report for these purposes."
+      },
+      "review": {
+        "title": "Check and submit",
+        "edit": "Edit",
+        "notGiven": "Not given",
+        "removedWarning": "For your safety, we'll remove these from your description before saving: {items}.",
+        "submit": "Submit report",
+        "submitting": "Submitting…",
+        "signInToSubmit": "Sign in to submit",
+        "signInHint": "Sign in with your email so you can come back to your report later. Your answers stay saved on this phone.",
+        "uploading": "Uploading evidence {current} of {total}…"
+      }
+    },
+    "fields": {
+      "category": "Type of scam",
+      "description": "What happened",
+      "channel": "How they contacted you",
+      "identifiers": "Scammer's details",
+      "date": "Date",
+      "amount": "Amount lost",
+      "method": "Payment method",
+      "last4": "Your account (last 4 digits)",
+      "txn": "Transaction ID / UTR",
+      "evidence": "Evidence files"
+    },
+    "removed": {
+      "card": "card number",
+      "cvv": "CVV",
+      "otp": "OTP or PIN",
+      "password": "password",
+      "bank_account": "full account number",
+      "aadhaar": "Aadhaar number"
+    },
+    "errors": {
+      "required": "Please choose an option.",
+      "invalidIdentifier": "This doesn't look right for the type you chose. Check it and try again.",
+      "invalidDate": "Enter a date that isn't in the future.",
+      "invalidAmount": "Enter the amount in rupees.",
+      "invalidLast4": "Enter exactly 4 digits.",
+      "invalidTransactionRef": "Use 6 to 40 letters or numbers.",
+      "consentRequired": "Please tick the box to continue.",
+      "rateLimited": "You've sent a lot of reports today. Please try again tomorrow.",
+      "serviceUnavailable": "We couldn't save your report right now. Your answers are still saved on this phone. Please try again.",
+      "uploadFailed": "Some files couldn't be uploaded. You can add them again from your report page.",
+      "storageUnavailable": "File uploads aren't available right now. Your report is saved; try adding files later.",
+      "evidenceLimit": "This report already has 10 files.",
+      "notFound": "We couldn't find that report."
+    }
+  },
+  "reportPage": {
+    "metaTitle": "Your report",
+    "title": "Your report",
+    "created": "Reported on {date}",
+    "newBanner": "Your report is saved. Now file your complaint using the text below.",
+    "uploadIssue": "Some files couldn't be uploaded. Add them again below.",
+    "notFiling": "Kavach doesn't send anything to the police or your bank. You file the complaint yourself, using the text below.",
+    "statusLabel": "Where are you with this?",
+    "statusSaved": "Saved",
+    "fileTitle": "File your complaint",
+    "call1930": "Call 1930 and give them these details",
+    "portalTitle": "For cybercrime.gov.in",
+    "portalHint": "Paste this into the incident details box when you file your complaint.",
+    "openPortal": "Open cybercrime.gov.in",
+    "bankTitle": "For your bank",
+    "bankHint": "Email it from your registered email address, or print it and take it to your branch. Fill in the parts in [brackets].",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "textLanguage": "Language",
+    "evidenceTitle": "Evidence files",
+    "evidenceEmpty": "No files added yet.",
+    "download": "Download",
+    "hash": "SHA-256 fingerprint",
+    "hashHint": "This fingerprint proves the file hasn't changed since you uploaded it.",
+    "addEvidence": "Add files",
+    "uploadDone": "{count, plural, one {# file uploaded} other {# files uploaded}}.",
+    "pdf": "Download PDF summary",
+    "pdfPreparing": "Preparing PDF…",
+    "pdfNote": "The PDF is in English, for police and bank officials.",
+    "pdfFailed": "We couldn't create the PDF. Please try again.",
+    "detailsTitle": "Report details",
+    "deleteTitle": "Delete this report",
+    "deleteBody": "This permanently deletes the report and its files. It can't be undone.",
+    "deleteButton": "Delete report",
+    "deleteConfirm": "Yes, delete it",
+    "cancel": "Cancel",
+    "deleting": "Deleting…"
   }
 }

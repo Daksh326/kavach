@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(26);
+select plan(31);
 
 -- Helpers to impersonate a role the way PostgREST does.
 create function pg_temp.as_user(p_id uuid) returns void language sql as $$
@@ -70,6 +70,34 @@ reset role;
 select is((select count(*)::int from public.reports
            where user_id = 'a0000000-0000-4000-8000-000000000004' and status = 'resolved'), 0,
   'Asha could not change Meera''s report status');
+
+-- ---------------------------------------------------------------- get_report_identifiers
+select pg_temp.as_user('a0000000-0000-4000-8000-000000000002');
+select is((select count(*)::int from public.get_report_identifiers(
+  (select id from public.reports where user_id = 'a0000000-0000-4000-8000-000000000002' order by created_at limit 1))), 3,
+  'owner sees identifiers on own report via get_report_identifiers');
+reset role;
+select pg_temp.as_user('a0000000-0000-4000-8000-000000000003');
+select is((select count(*)::int from public.get_report_identifiers(
+  (select id from public.reports where user_id = 'a0000000-0000-4000-8000-000000000002' order by created_at limit 1))), 0,
+  'get_report_identifiers returns nothing for someone else''s report');
+reset role;
+select pg_temp.as_anon();
+select throws_ok($$ select * from public.get_report_identifiers(gen_random_uuid()) $$, '42501', null,
+  'anon cannot call get_report_identifiers');
+reset role;
+
+-- Evidence limit backstop: 10 per report.
+select throws_ok($$
+  insert into public.evidence (report_id, user_id, r2_key, mime_type, size_bytes, sha256)
+  select r.id, r.user_id, 'evidence/limit-test/' || g, 'image/png', 1, repeat('a', 64)
+  from (select id, user_id from public.reports
+        where user_id = 'a0000000-0000-4000-8000-000000000005' order by created_at limit 1) r,
+       generate_series(1, 11) g $$,
+  'P0413', null, 'more than 10 evidence files per report is rejected');
+select throws_ok($$
+  update public.reports set transaction_ref = 'bad ref!' where user_id = 'a0000000-0000-4000-8000-000000000005' $$,
+  '23514', null, 'transaction_ref format is enforced');
 
 -- ---------------------------------------------------------------- user: Meera
 select pg_temp.as_user('a0000000-0000-4000-8000-000000000004');

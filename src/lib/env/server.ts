@@ -20,6 +20,9 @@ const schema = z.object({
   R2_ACCESS_KEY_ID: z.string().min(1).optional(),
   R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   R2_BUCKET: z.string().min(1).optional(),
+  // Only for local S3-compatible emulators; production derives the R2 endpoint.
+  R2_ENDPOINT: z.url().optional(),
+  R2_REGION: z.string().min(1).optional(),
 
   // Phase 4: AI analysis
   GEMINI_API_KEY: z.string().min(1).optional(),

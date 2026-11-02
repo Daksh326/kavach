@@ -29,6 +29,7 @@ pnpm db:reset            # re-apply all migrations + supabase/seed.sql
 pnpm db:test             # pgTAP RLS tests in supabase/tests
 pnpm db:new <name>       # new migration file
 pnpm db:types            # regenerate src/lib/supabase/database.types.ts (local DB)
+pnpm storage:check       # end-to-end check of the R2 config in .env.local (upload, tamper, download, delete)
 ```
 Always verify runtime behaviour with `pnpm cf:preview`, not just `next start`:
 OpenNext/workerd behaves differently (see Platform gotchas).
@@ -50,6 +51,16 @@ src/lib/identifiers/            normalize.ts (phone/UPI/URL/email/social/IFSC ->
                                 shared-domains.ts (platforms never recorded as a "domain"), lookup.ts (public RPCs)
 src/components/check/           /check search form (GET, works without JS) + result rendering
 src/components/emergency/       checklist island (ticks in localStorage only)
+src/components/report/          wizard (client-only via ssr:false loader), report page widgets, PDF (lazy)
+src/components/dashboard/       account deletion
+src/lib/report/                 draft-store.ts (localStorage + IndexedDB drafts), evidence-client.ts (hash + upload)
+src/lib/storage/                r2.ts (aws4fetch: presign PUT/GET, HEAD, DELETE), upload-ticket.ts (HMAC), purge.ts
+src/lib/evidence/rules.ts       shared evidence limits, MIME allowlist, hashing (SHA-256 + MD5)
+src/lib/redact/sensitive.ts     strips card/CVV/OTP/password/account/Aadhaar from free text before saving
+src/lib/complaint/              build.ts (portal + bank text, en/hi, pure + tested), labels.ts
+src/app/api/me/export/          DPDP data export (JSON)
+scripts/r2-check.ts             storage setup checker
+public/fonts/                   Noto Sans + Noto Sans Devanagari (OFL) for the PDF only
 src/components/ui/              shadcn components (generated; edit sparingly)
 supabase/migrations/            SQL migrations (schema, functions, RLS)
 supabase/seed.sql               Local-only fake data
@@ -95,6 +106,15 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   parity, matching ICU args, and a label for every DB enum value.
 - **Lookup results**: always show "not verified" wording; "No reports found"
   must never read as "safe". Pages showing a specific identifier are noindex.
+- **Evidence upload flow**: `createEvidenceUpload` (ownership + limits ->
+  presigned PUT with signed Content-Type + Content-MD5, plus an HMAC ticket
+  binding key/sha256/size/mime) -> browser PUTs to R2 -> `confirmEvidenceUpload`
+  (verifies ticket, HEADs object, checks size, inserts the row). Object keys
+  are `evidence/<user>/<report>/<uuid>`: never put file names or PII in keys.
+- **Report drafts** stay on the device until consent + submit. After a
+  successful submit the wizard stops autosaving (`finished` ref) before clearing.
+- **Free text** that gets stored (report description) goes through
+  `stripSensitive()` on the server. The client runs it too, only to warn.
 - **Formatting**: Prettier (`pnpm format`), printWidth 100.
 
 ## Database rules
@@ -146,13 +166,28 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   populates it — plain `wrangler dev` does not.
 - `input-otp` fires `onComplete` only when the value grows to full length —
   clear the value after a failed attempt.
+- **Worker size budget (free plan: 3 MiB gzip).** Currently ~2.0 MiB. Next's
+  server build traces even click-time `import()`s in client components. Heavy
+  browser-only libraries (react-pdf, ~1.7 MB) must be reached only through a
+  `next/dynamic(..., { ssr: false })` boundary (see `pdf-button-loader.tsx`).
+  Check with `pnpm wrangler deploy --dry-run --outdir /tmp/x` after adding deps.
+- **Free plan CPU is ~10 ms/request**: never hash, resize or parse evidence
+  files in the Worker. Browsers upload directly to R2 via presigned URLs.
+- R2 documents **Content-MD5** for PutObject but not `x-amz-checksum-sha256`
+  (SHA-256 is multipart-only), so uploads are integrity-checked with MD5; the
+  SHA-256 shown to users is recorded from the browser and bound by the ticket.
+- react-pdf renders Devanagari correctly with the bundled Noto fonts (incl.
+  conjuncts and ₹); Helvetica has neither, so always use the registered fonts.
+- Server Components can't call functions exported from `"use client"` modules
+  (they become client references). Shared helpers go in directive-free files.
 
 ## Phase status
 1. ✅ Setup: scaffold, OpenNext/Wrangler, Supabase schema + RLS + RPCs + seed +
    pgTAP tests, generated types, auth (email OTP + Google), i18n skeleton.
 2. ✅ Emergency page + home + /check lookup (en + hi); Vitest + normalisation tests;
    /analyse placeholder (home box hands text over via sessionStorage "kavach:analyse-draft")
-3. ⏳ Report wizard + R2 evidence + dashboard + complaint text/PDF
+3. ✅ Report wizard (device drafts, sign-in at submit) + R2 evidence (presigned, MD5-checked,
+   HMAC ticket) + report page (complaint text en/hi, PDF, status) + dashboard (export, delete)
 4. ⏳ /analyse with Gemini behind `analyseScam()` + PII redaction
 5. ⏳ Admin moderation, flags, Turnstile, rate limits, PWA/offline, Sentry, PostHog, cron jobs
 6. ⏳ Vitest/Playwright suites, deploy, full README

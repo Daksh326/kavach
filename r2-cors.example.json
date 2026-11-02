@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["http://localhost:3000", "http://localhost:8787", "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev"],
+        "methods": ["PUT", "GET"],
+        "headers": ["content-type", "content-md5"]
+      },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

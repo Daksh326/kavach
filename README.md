@@ -3,7 +3,7 @@
 Victim-first scam help for India: emergency steps, lookup of reported phone
 numbers / UPI IDs / links, AI scam check, and complaint text generation.
 
-> Status: **Phase 2** (emergency steps, home, number/UPI/link lookup). See `CLAUDE.md` for architecture
+> Status: **Phase 3** (report wizard, evidence uploads, complaint text and PDF, dashboard). See `CLAUDE.md` for architecture
 > and conventions. This README grows with each phase.
 
 ---
@@ -62,8 +62,9 @@ pnpm test
 pnpm db:test
 ```
 
-`test` runs the Vitest unit tests (identifier normalisation, translation
-catalogs). `db:test` runs the pgTAP RLS suite (26 tests) against the local database.
+`test` runs the Vitest unit tests (identifier normalisation, sensitive-data
+stripping, complaint text, evidence hashing, translation catalogs). `db:test`
+runs the pgTAP database security suite (31 tests) against the local database.
 
 ### Try Phase 2
 
@@ -75,6 +76,27 @@ catalogs). `db:test` runs the pgTAP RLS suite (26 tests) against the local datab
   - `kyc-update-portl.test` (typo: shows the similar reported site)
   - `6000000202` (one person reported it twice, so it stays "No reports found")
   - `wa.me/916000000101` (phone pulled out of a WhatsApp link)
+
+### Try Phase 3
+
+- http://localhost:3000/en/report: fill in the wizard. You can do it signed out;
+  you'll be asked to sign in at "Submit", and your answers come back afterwards.
+- Your new report opens with the complaint text (English/Hindi), copy buttons,
+  a PDF summary and a status picker.
+- http://localhost:3000/en/dashboard: your reports, "Download my data" and
+  "Delete my account and data".
+- On any `/check` result, "Report it" starts a report with that number filled in.
+
+**Evidence uploads need R2.** Without the `R2_*` variables everything else works
+and uploads say "not available". To test uploads locally, set up your real (free)
+R2 bucket as in step 2.2 (its CORS rule includes `http://localhost:3000`),
+put the `R2_*` values in `.env.local`, and run:
+
+```bash
+pnpm storage:check
+```
+
+All 8 checks should say PASS. Two of them prove R2 rejects a tampered upload.
 
 ### Run on the real Cloudflare runtime locally
 
@@ -175,8 +197,27 @@ pnpm wrangler login
 pnpm wrangler r2 bucket create kavach-evidence
 ```
 
-Keep the bucket **private** (no public access, no r2.dev URL). Phase 3 adds the
-R2 API token and CORS steps.
+Keep the bucket **private**: no public access, no r2.dev URL, no custom domain.
+
+**Allow browser uploads (CORS).** Copy the template, replace
+`https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev` with your real site URL, and apply it:
+
+```bash
+cp r2-cors.example.json r2-cors.json
+```
+
+```bash
+pnpm wrangler r2 bucket cors set kavach-evidence --file r2-cors.json
+```
+
+**Create an API token for the app.** Cloudflare dashboard → R2 → **Manage API
+tokens** → **Create Account API token**: permission **Object Read & Write**,
+apply to the **kavach-evidence** bucket only. Copy the Access Key ID and Secret
+Access Key (shown once). Your Account ID is on the R2 overview page.
+
+Put them in `.env.local` (for local dev) as `R2_ACCOUNT_ID`,
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=kavach-evidence`, then run
+`pnpm storage:check`.
 
 ### 2.3 Google OAuth
 
@@ -204,6 +245,24 @@ pnpm wrangler secret put SUPABASE_SECRET_KEY
 
 ```bash
 pnpm wrangler secret put CRON_SECRET
+```
+
+Then the four R2 values from step 2.2, one at a time:
+
+```bash
+pnpm wrangler secret put R2_ACCOUNT_ID
+```
+
+```bash
+pnpm wrangler secret put R2_ACCESS_KEY_ID
+```
+
+```bash
+pnpm wrangler secret put R2_SECRET_ACCESS_KEY
+```
+
+```bash
+pnpm wrangler secret put R2_BUCKET
 ```
 
 Deploy:

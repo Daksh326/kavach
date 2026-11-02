@@ -156,12 +156,20 @@ export default async function EmergencyPage({ params }: PageProps<"/[locale]/eme
       <section className="space-y-3 rounded-xl border p-4">
         <h2 className="text-xl font-bold">{t("nextTitle")}</h2>
         <p>{t("nextBody")}</p>
-        <Link
-          href="/check"
-          className="flex h-12 items-center justify-center rounded-lg border-2 border-primary px-4 font-semibold text-primary"
-        >
-          {t("nextAction")}
-        </Link>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link
+            href="/report"
+            className="flex h-12 items-center justify-center rounded-lg bg-primary px-4 font-semibold text-primary-foreground"
+          >
+            {t("reportAction")}
+          </Link>
+          <Link
+            href="/check"
+            className="flex h-12 items-center justify-center rounded-lg border-2 border-primary px-4 font-semibold text-primary"
+          >
+            {t("nextAction")}
+          </Link>
+        </div>
       </section>
     </article>
   );
