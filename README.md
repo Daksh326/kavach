@@ -3,7 +3,7 @@
 Victim-first scam help for India: emergency steps, lookup of reported phone
 numbers / UPI IDs / links, AI scam check, and complaint text generation.
 
-> Status: **Phase 1** (setup, database, auth). See `CLAUDE.md` for architecture
+> Status: **Phase 2** (emergency steps, home, number/UPI/link lookup). See `CLAUDE.md` for architecture
 > and conventions. This README grows with each phase.
 
 ---
@@ -55,10 +55,26 @@ pnpm check
 ```
 
 ```bash
+pnpm test
+```
+
+```bash
 pnpm db:test
 ```
 
-`db:test` runs the pgTAP RLS suite (26 tests) against the local database.
+`test` runs the Vitest unit tests (identifier normalisation, translation
+catalogs). `db:test` runs the pgTAP RLS suite (26 tests) against the local database.
+
+### Try Phase 2
+
+- http://localhost:3000/en/emergency (tick steps off; ticks are remembered on the device)
+- http://localhost:3000/en/check, then try these seeded examples:
+  - `60000 00101` (reported by 3 people)
+  - `earn.daily.tasks@fakepsp` (reported by 2)
+  - `https://kyc-update-portal.test/verify` (website reported, exact link not)
+  - `kyc-update-portl.test` (typo: shows the similar reported site)
+  - `6000000202` (one person reported it twice, so it stays "No reports found")
+  - `wa.me/916000000101` (phone pulled out of a WhatsApp link)
 
 ### Run on the real Cloudflare runtime locally
 

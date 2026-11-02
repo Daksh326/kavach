@@ -113,7 +113,7 @@ begin
     "category":"online_shopping","channel":"website",
     "description":"Ordered a phone on a discount site, never delivered.",
     "amount_lost":"8999","incident_date":"2026-10-25","payment_method":"upi"}',
-    '[{"type":"url","value":"https://mega-sale-store.test/"},{"type":"domain","value":"mega-sale-store.test"}]');
+    '[{"type":"url","value":"https://mega-sale-store.test"},{"type":"domain","value":"mega-sale-store.test"}]');
   update public.reports set status = 'filed_portal' where id = v_id;
 
   -- Fake evidence metadata (no R2 object exists for these keys locally).

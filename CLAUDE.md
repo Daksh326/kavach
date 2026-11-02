@@ -19,6 +19,7 @@ Resend · Sentry · PostHog (no PII) · Cron Triggers · Vitest + Playwright · 
 ```
 pnpm dev                 # next dev on :3000 (needs `pnpm db:start` first)
 pnpm check               # typecheck (next typegen + tsc) + eslint
+pnpm test                # Vitest unit tests (src/**/*.test.ts)
 pnpm build               # next build (Node) — quick sanity check
 pnpm cf:preview          # build for Workers + run in workerd on :8787  <- the real target
 pnpm cf:deploy           # build + deploy to Cloudflare
@@ -41,9 +42,14 @@ src/app/[locale]/...            Pages. Every page calls setRequestLocale(locale)
 src/app/auth/callback/route.ts  OAuth PKCE callback (outside [locale])
 src/app/api/cron/daily/         Daily job, called by custom-worker.ts scheduled()
 src/lib/env/{public,server}.ts  Zod-validated env. server.ts is `server-only`.
-src/lib/supabase/               client.ts (browser), server.ts (user, RLS), admin.ts (service role), proxy.ts
+src/lib/supabase/               client.ts (browser), server.ts (user, RLS), admin.ts (service role),
+                                public.ts (stateless anon, for public read RPCs), proxy.ts
 src/lib/auth/dal.ts             getCurrentUser / requireUser / getCurrentProfile — the only auth source of truth
 src/lib/validation/             Zod schemas shared by forms and Server Actions
+src/lib/identifiers/            normalize.ts (phone/UPI/URL/email/social/IFSC -> DB form, input detection),
+                                shared-domains.ts (platforms never recorded as a "domain"), lookup.ts (public RPCs)
+src/components/check/           /check search form (GET, works without JS) + result rendering
+src/components/emergency/       checklist island (ticks in localStorage only)
 src/components/ui/              shadcn components (generated; edit sparingly)
 supabase/migrations/            SQL migrations (schema, functions, RLS)
 supabase/seed.sql               Local-only fake data
@@ -80,6 +86,15 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   `text-destructive`...). Dark mode follows the OS (`prefers-color-scheme`).
 - **Adding shadcn components**: `pnpm dlx shadcn@latest add <name>` (works on
   a normal network; this repo's components were fetched from the registry source).
+- **Identifiers**: ALWAYS normalise through `src/lib/identifiers/normalize.ts`
+  before storing or looking up (DB check constraints mirror its output). URLs
+  are stored as `https://host/path` (no www/query/fragment, path case kept)
+  plus the registrable domain, unless the domain is in `SHARED_DOMAINS`.
+- **Dynamic translation keys** (e.g. `steps.${id}.title`): cast `t` to
+  `(key: string) => string`; `src/i18n/messages.test.ts` guarantees en/hi key
+  parity, matching ICU args, and a label for every DB enum value.
+- **Lookup results**: always show "not verified" wording; "No reports found"
+  must never read as "safe". Pages showing a specific identifier are noindex.
 - **Formatting**: Prettier (`pnpm format`), printWidth 100.
 
 ## Database rules
@@ -135,7 +150,8 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
 ## Phase status
 1. ✅ Setup: scaffold, OpenNext/Wrangler, Supabase schema + RLS + RPCs + seed +
    pgTAP tests, generated types, auth (email OTP + Google), i18n skeleton.
-2. ⏳ Emergency page + home + /check lookup (en + hi)
+2. ✅ Emergency page + home + /check lookup (en + hi); Vitest + normalisation tests;
+   /analyse placeholder (home box hands text over via sessionStorage "kavach:analyse-draft")
 3. ⏳ Report wizard + R2 evidence + dashboard + complaint text/PDF
 4. ⏳ /analyse with Gemini behind `analyseScam()` + PII redaction
 5. ⏳ Admin moderation, flags, Turnstile, rate limits, PWA/offline, Sentry, PostHog, cron jobs

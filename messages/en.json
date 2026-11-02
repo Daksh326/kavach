@@ -12,13 +12,25 @@
     "switchLanguage": "हिन्दी",
     "switchLanguageLabel": "हिन्दी में देखें",
     "backHome": "Back to home",
-    "helpline": "Cyber fraud helpline: call 1930"
+    "helpline": "Cyber fraud helpline: call 1930",
+    "emergency": "Emergency steps",
+    "check": "Check",
+    "call1930": "Call 1930"
   },
   "home": {
-    "title": "Got scammed? Act in the first hour.",
-    "subtitle": "Call 1930 right away if money has left your account. Kavach then helps you check numbers and links, and report the scam.",
-    "call1930": "Call 1930 now",
-    "comingSoon": "The emergency checklist, number lookup and scam checker are being built."
+    "title": "Scammed, or got a suspicious message?",
+    "subtitle": "Free help for people in India. No sign-in needed.",
+    "call1930": "Lost money? Call 1930 now",
+    "scammedButton": "I've been scammed",
+    "scammedHint": "Step-by-step help for the first hour",
+    "checkTitle": "Check a number, UPI ID or link",
+    "checkHint": "See if others reported it as a scam.",
+    "analyseTitle": "Is this message a scam?",
+    "analyseHint": "Paste an SMS, WhatsApp or email message.",
+    "analysePlaceholder": "Paste the message here",
+    "analyseButton": "Check this message",
+    "analyseNotice": "Messages are checked by an AI service. Never paste OTPs, PINs or passwords.",
+    "analyseEmpty": "Paste a message first."
   },
   "auth": {
     "title": "Sign in to Kavach",
@@ -52,5 +64,169 @@
   "notFound": {
     "title": "Page not found",
     "body": "This page does not exist. If you need help with a scam, start from the home page."
+  },
+  "redFlags": {
+    "title": "Common signs of a scam",
+    "items": {
+      "1": "Pressure or threats: “your account will be blocked today”, “arrest warrant in your name”.",
+      "2": "Asking for an OTP, UPI PIN, CVV, password or screen sharing.",
+      "3": "Asking you to pay first to get money, a prize, a refund, a loan or a job.",
+      "4": "Links that look like a bank, courier or government site but have a strange address.",
+      "5": "“Police” or “CBI” keeping you on a video call (“digital arrest”). This does not exist — hang up.",
+      "6": "Profits that are too good to be true, or tasks that pay you to like videos."
+    }
+  },
+  "emergency": {
+    "metaTitle": "Scammed? What to do now",
+    "title": "Scammed? Do these steps now",
+    "intro": "Stay calm. Acting in the first hour gives the best chance of stopping your money. Do these in order and tick each one off.",
+    "hangUpTitle": "Is someone still on a call with you?",
+    "hangUpBody": "Hang up now. Real police, banks and government officers never ask for money, OTPs or screen sharing on a call.",
+    "progress": "{done} of {total} done",
+    "markDone": "Done",
+    "notYourFault": "This is not your fault. Scammers are professionals who fool thousands of careful people every day.",
+    "steps": {
+      "call1930": {
+        "title": "Call 1930, the national cyber fraud helpline",
+        "body": "Call right away if money has left your account. The sooner you call, the better the chance your money can be frozen before scammers move it.",
+        "listTitle": "Keep this ready when you call:",
+        "items": {
+          "1": "Your bank name and account number or UPI ID",
+          "2": "Transaction ID (UTR), date, time and amount",
+          "3": "The scammer's phone number, UPI ID or website link"
+        },
+        "note": "If 1930 is busy, keep trying, and file online (next step) at the same time.",
+        "action": "Call 1930"
+      },
+      "portal": {
+        "title": "File a complaint on cybercrime.gov.in",
+        "body": "On the National Cyber Crime Reporting Portal, choose “Report Cyber Crime”, then the financial fraud option. Save the acknowledgement number you get. Your bank and the police will ask for it.",
+        "action": "Open cybercrime.gov.in"
+      },
+      "bank": {
+        "title": "Call your bank to block and dispute",
+        "body": "Ask them to block your card, UPI and net banking if you shared any details, and to raise a fraud dispute for the payment. Write down the complaint reference number.",
+        "note": "Only use the number on the back of your card or in your bank's official app. Never call a “customer care” number from a Google search, SMS or WhatsApp.",
+        "extra": "RBI rules protect you best when you tell your bank about an unauthorised transaction quickly, within 3 working days."
+      },
+      "chakshu": {
+        "title": "Report the fraud call or message on Sanchar Saathi",
+        "body": "On the Sanchar Saathi website or app, choose “Chakshu: Report Suspected Fraud Communication” and enter the number and message. This helps get scam numbers blocked.",
+        "action": "Open Sanchar Saathi"
+      },
+      "evidence": {
+        "title": "Save all evidence",
+        "body": "Take screenshots before you block anyone or delete anything:",
+        "items": {
+          "1": "Chats, SMS and emails from the scammer",
+          "2": "Call log showing their number",
+          "3": "Payment screens, bank SMS and transaction IDs (UTR)",
+          "4": "Their profile, website link or app name"
+        },
+        "note": "Don't delete the chats, even if you feel embarrassed."
+      },
+      "secure": {
+        "title": "Secure your phone and accounts",
+        "items": {
+          "1": "Uninstall any screen-sharing app the caller asked you to install (like AnyDesk or TeamViewer).",
+          "2": "Change your UPI PIN, net banking and email passwords, using a phone the scammer never had access to.",
+          "3": "If your SIM suddenly stopped working, call your mobile operator at once. It may be a SIM swap."
+        }
+      },
+      "recovery": {
+        "title": "Don't pay anyone who promises to get your money back",
+        "body": "“Recovery agents”, “cyber lawyers” or “officers” who ask for a fee to return your money are running a second scam. 1930, the police and banks never charge you to recover money."
+      }
+    },
+    "nextTitle": "Next: warn others",
+    "nextBody": "Check the scammer's number, UPI ID or link to see if others reported it too.",
+    "nextAction": "Check a number or link"
+  },
+  "check": {
+    "metaTitle": "Check a number, UPI ID or link",
+    "title": "Check a number, UPI ID or link",
+    "intro": "See if other people have reported a phone number, UPI ID, website or email as a scam.",
+    "label": "Phone number, UPI ID, link or email",
+    "placeholder": "e.g. 98765 43210",
+    "button": "Check",
+    "examples": "You can paste a phone number, UPI ID, UPI QR link, website, WhatsApp link (wa.me) or email.",
+    "errors": {
+      "empty": "Type or paste a phone number, UPI ID, link or email.",
+      "unrecognized": "We couldn't recognise that. Enter a phone number, a UPI ID (like name@ybl), a website link or an email.",
+      "too_long": "That's too long. Paste just the number, UPI ID or link.",
+      "ip_address": "Links that use a bare IP address (like 192.168.1.1) can't be checked. Treat them as very suspicious.",
+      "unsupported_scheme": "Only website links (starting with http or https) can be checked.",
+      "invalid": "That link doesn't look right. Check it and try again.",
+      "unavailable": "We couldn't check right now. Please try again in a moment. If you've lost money, don't wait: call 1930."
+    },
+    "kinds": {
+      "phone": "Phone number",
+      "upi": "UPI ID",
+      "email": "Email",
+      "url": "Website",
+      "domain": "Website",
+      "whatsapp": "WhatsApp number",
+      "telegram": "Telegram account",
+      "social": "Social media account",
+      "bank_ifsc": "Bank IFSC"
+    },
+    "rows": {
+      "exactLink": "This exact link",
+      "website": "The website {domain}",
+      "telegramLink": "This Telegram link"
+    },
+    "reportedTitle": "Reported as a scam by {count, plural, one {# person} other {# people}}",
+    "notVerified": "Reported by Kavach users. Not verified by Kavach or the police.",
+    "categories": "Reported for",
+    "channels": "They contacted people by",
+    "firstReported": "First reported",
+    "lastReported": "Last reported",
+    "reportedAdvice": "Don't pay, share an OTP or install any app they ask for. If you've already paid, follow the emergency steps now.",
+    "notReportedTitle": "No reports found",
+    "notReportedBody": "Not enough people have reported this yet. That does not mean it is safe: scammers change numbers and links often.",
+    "notReportedAdvice": "Never share an OTP, UPI PIN or card details, and never pay to “receive” money.",
+    "sharedPlatform": "{host} is a big platform used by millions of people, so we only check this exact link, not the whole site.",
+    "lookalike": "Warning: this address uses look-alike characters ({host}). Scammers use these to imitate real brand websites.",
+    "whatsappFound": "This WhatsApp link opens a chat with {phone}.",
+    "telegramFound": "This Telegram link opens the account {handle}.",
+    "similarTitle": "Similar websites that were reported",
+    "similarHint": "Scam sites often differ from real ones by a letter or two.",
+    "similarCount": "{count, plural, one {# report} other {# reports}}",
+    "emergencyCta": "I've lost money. What do I do?",
+    "disclaimer": "Kavach shows what users have reported to help people stay safe. Reports are not verified and are not proof that anyone committed a crime."
+  },
+  "analyse": {
+    "metaTitle": "Is this message a scam?",
+    "title": "Is this message a scam?",
+    "comingSoon": "Our AI message checker is coming soon. Until then, look for these signs:"
+  },
+  "categories": {
+    "upi_collect_request": "UPI collect / payment request",
+    "fake_customer_care": "Fake customer care",
+    "kyc_bank_impersonation": "Fake bank / KYC update",
+    "digital_arrest": "Fake police / “digital arrest”",
+    "investment_trading": "Investment or trading scam",
+    "task_job_scam": "Task or part-time job scam",
+    "loan_app": "Loan app harassment",
+    "sextortion": "Sextortion / video call blackmail",
+    "online_shopping": "Fake online shop or seller",
+    "lottery_prize": "Lottery, prize or gift",
+    "romance": "Romance or friendship scam",
+    "utility_bill": "Electricity or bill payment scam",
+    "otp_sim_swap": "OTP or SIM swap fraud",
+    "phishing_link": "Phishing link",
+    "other": "Other"
+  },
+  "channels": {
+    "phone_call": "Phone call",
+    "sms": "SMS",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "email": "Email",
+    "social_media": "Social media",
+    "website": "Website",
+    "app": "App",
+    "in_person": "In person",
+    "other": "Other"
   }
 }
