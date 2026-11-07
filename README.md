@@ -22,7 +22,6 @@ or payment request.
 **Built with** Next.js 16 on Cloudflare Workers (OpenNext), Supabase
 (Postgres + Auth, row-level security on every table), Cloudflare R2, Google
 Gemini, Turnstile, Upstash, Sentry and PostHog, all on free tiers.
-`CLAUDE.md` describes the architecture, conventions and platform gotchas.
 
 > Status: **all 6 phases done.** Deploying is the remaining step: follow
 > section 2 below.

@@ -24,6 +24,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Do not generate AGENTS.md during `next dev`.
+  agentRules: false,
   // cacheComponents is intentionally OFF: Next documents it as Node.js-only and
   // "not guaranteed" on other runtimes; we deploy to Cloudflare workerd via
   // OpenNext. Static pages are still prerendered the classic way.

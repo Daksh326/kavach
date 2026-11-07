@@ -1,5 +1,5 @@
 /**
- * Removes secrets that must never be stored (CLAUDE.md privacy rules):
+ * Removes secrets that must never be stored (privacy rules):
  * full card numbers, CVV, OTP/PIN codes, passwords, full bank account
  * numbers, Aadhaar numbers. Pure and dependency-free: runs on the server
  * (authoritative, before saving) and in the browser (to warn the user).
