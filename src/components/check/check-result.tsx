@@ -4,6 +4,8 @@ import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import type { DetectResult } from "@/lib/identifiers/normalize";
 import type { LookupHit, SimilarHit } from "@/lib/identifiers/lookup";
+import { FlagForm } from "./flag-form";
+import { TrackOnce } from "@/components/monitoring/observability";
 
 type Detected = Extract<DetectResult, { ok: true }>;
 
@@ -45,6 +47,10 @@ export async function CheckResult({
 
   return (
     <section aria-live="polite" className="space-y-4">
+      <TrackOnce
+        event="check_performed"
+        props={{ kind: detected.kind, reported: reported.length > 0 }}
+      />
       {/* Summary */}
       {reported.length > 0 ? (
         <div className="space-y-3 rounded-xl border-2 border-destructive bg-destructive/5 p-4">
@@ -131,6 +137,7 @@ export async function CheckResult({
                     </div>
                   </dl>
                 )}
+                <FlagForm type={hit.type} value={hit.value} />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">{t("notReportedTitle")}</p>

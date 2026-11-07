@@ -8,17 +8,27 @@ import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env/public";
 import { emailSchema, otpSchema, safeNextPath } from "@/lib/validation/auth";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { clientIpHash } from "@/lib/security/client-ip";
+import { withinLimits } from "@/lib/security/rate-limit";
+import { actionMetaSchema } from "@/lib/validation/meta";
 
 function authErrorKey(error: AuthError): string {
   if (error.status === 429 || error.code?.startsWith("over_")) return "tooManyAttempts";
+  if (error.code === "captcha_failed") return "botCheckFailed";
   if (error.code === "otp_expired" || error.status === 403 || error.status === 400)
     return "wrongCode";
   return "serviceUnavailable";
 }
 
-export async function sendOtp(input: { email: string }): Promise<ActionResult<{ email: string }>> {
+export async function sendOtp(
+  input: { email: string },
+  meta?: unknown,
+): Promise<ActionResult<{ email: string }>> {
   const parsed = emailSchema.safeParse(input);
   if (!parsed.success) return fail("invalidEmail");
+  const { turnstileToken } = actionMetaSchema.parse(meta) ?? {};
+
+  if (!(await withinLimits(["otpIp", await clientIpHash()]))) return fail("tooManyAttempts");
 
   const locale = await getLocale();
   try {
@@ -29,7 +39,9 @@ export async function sendOtp(input: { email: string }): Promise<ActionResult<{ 
         shouldCreateUser: true,
         // Copied into profiles.language by the auth.users trigger.
         data: { language: locale },
-        // Phase 5: captchaToken (Cloudflare Turnstile via Supabase Auth captcha).
+        // Turnstile token, verified by Supabase Auth itself when its captcha
+        // protection is enabled (so calling Auth directly can't bypass it).
+        captchaToken: turnstileToken || undefined,
       },
     });
     if (error) return fail(authErrorKey(error));

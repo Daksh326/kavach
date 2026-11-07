@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 
 const STORAGE_KEY = "kavach:emergency-checklist:v1";
 
@@ -56,7 +57,10 @@ export function ChecklistProvider({ total, children }: { total: number; children
   const toggle = useCallback((id: string) => {
     const next = parse(getSnapshot());
     if (next.has(id)) next.delete(id);
-    else next.add(id);
+    else {
+      next.add(id);
+      track("emergency_step_done", { step: id });
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
     } catch {

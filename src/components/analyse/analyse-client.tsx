@@ -14,22 +14,12 @@ import { cn } from "@/lib/utils";
 import { prepareScreenshot, type PreparedImage } from "@/lib/analyse/image";
 import { ANALYSE_TEXT_MAX, analyseTextFormSchema } from "@/lib/validation/analyse";
 import { analyseMessage, type AnalyseResult } from "@/app/[locale]/analyse/actions";
+import { Turnstile, useTurnstile } from "@/components/security/turnstile";
 import { AnalyseResultView } from "./analyse-result";
+import { track } from "@/lib/analytics/track";
 
 /** Written by the home page's "Is this message a scam?" box. */
 const DRAFT_KEY = "kavach:analyse-draft";
-
-const KNOWN_ERRORS = new Set([
-  "invalidInput",
-  "tooShort",
-  "tooLong",
-  "invalidImage",
-  "aiNotConfigured",
-  "aiBusy",
-  "aiUnavailable",
-  "aiBlocked",
-  "aiBadResponse",
-]);
 
 function readDraft(): string {
   try {
@@ -47,6 +37,7 @@ export function AnalyseClient() {
   const [preparing, setPreparing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bot, botRef] = useTurnstile();
   const [result, setResult] = useState<{ data: AnalyseResult; originalText: string | null } | null>(
     null,
   );
@@ -73,14 +64,27 @@ export function AnalyseClient() {
     };
   }, [image]);
 
-  const errorText = (key: string) => tx(`errors.${KNOWN_ERRORS.has(key) ? key : "aiUnavailable"}`);
+  // Any error key with a message in analyse.errors is shown; unknown keys fall back.
+  const errorText = (key: string) =>
+    tx(`errors.${t.has(`errors.${key}` as never) ? key : "aiUnavailable"}`);
 
-  async function run(payload: Parameters<typeof analyseMessage>[0], originalText: string | null) {
+  async function run(
+    payload:
+      | { kind: "text"; text: string }
+      | { kind: "image"; mimeType: PreparedImage["mimeType"]; dataBase64: string },
+    originalText: string | null,
+  ) {
     setBusy(true);
     setError(null);
     try {
-      const res = await analyseMessage(payload);
+      const res = await analyseMessage(payload, { turnstileToken: bot.token });
+      bot.reset(); // single-use token
       if (res.ok) {
+        track("analyse_completed", {
+          input: payload.kind,
+          risk: res.data.analysis.risk,
+          cached: res.data.cached,
+        });
         setResult({ data: res.data, originalText });
         window.scrollTo({ top: 0 });
       } else setError(res.error);
@@ -156,6 +160,8 @@ export function AnalyseClient() {
         </Alert>
       )}
 
+      <Turnstile ref={botRef} action="analyse" onToken={bot.onToken} />
+
       {mode === "text" ? (
         <form onSubmit={onText} className="space-y-3" noValidate>
           <Label htmlFor="analyse-text" className="text-base">
@@ -176,7 +182,12 @@ export function AnalyseClient() {
             <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
             {t("aiNotice")}
           </p>
-          <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={busy}>
+          <Button
+            type="submit"
+            size="lg"
+            className="h-12 w-full text-base"
+            disabled={busy || !bot.ready}
+          >
             {busy ? <Loader2 className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
             {busy ? t("checking") : t("submit")}
           </Button>
@@ -219,7 +230,7 @@ export function AnalyseClient() {
                 type="button"
                 size="lg"
                 className="h-12 w-full text-base"
-                disabled={busy}
+                disabled={busy || !bot.ready}
                 onClick={() =>
                   run(
                     { kind: "image", mimeType: image.mimeType, dataBase64: image.dataBase64 },

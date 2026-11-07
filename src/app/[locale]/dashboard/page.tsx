@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { ClientMessages } from "@/i18n/client-messages";
 import { ChevronRight, Download, Plus } from "lucide-react";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DeleteAccount } from "@/components/dashboard/delete-account";
-import { requireUser } from "@/lib/auth/dal";
+import { getCurrentProfile, requireUser } from "@/lib/auth/dal";
 import { formatInr } from "@/lib/complaint/build";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "../login/actions";
@@ -18,6 +19,7 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/das
   const { locale } = await params;
   setRequestLocale(locale as "en" | "hi");
   const user = await requireUser("/dashboard");
+  const profile = await getCurrentProfile();
   const [t, tc, ts, format] = await Promise.all([
     getTranslations(),
     getTranslations("categories"),
@@ -47,6 +49,15 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/das
           </Button>
         </form>
       </div>
+
+      {profile?.role === "admin" && (
+        <Link
+          href="/admin"
+          className="block text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {t("dashboard.adminLink")}
+        </Link>
+      )}
 
       <Link
         href="/report"
@@ -110,7 +121,9 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/das
             {t("dashboard.exportButton")}
           </a>
         </div>
-        <DeleteAccount />
+        <ClientMessages namespaces={["dashboard"]}>
+          <DeleteAccount />
+        </ClientMessages>
       </section>
     </div>
   );

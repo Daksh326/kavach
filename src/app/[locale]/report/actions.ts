@@ -18,6 +18,10 @@ import { purgeR2Keys } from "@/lib/storage/purge";
 import { signTicket, verifyTicket } from "@/lib/storage/upload-ticket";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { clientIpHash } from "@/lib/security/client-ip";
+import { withinLimits } from "@/lib/security/rate-limit";
+import { verifyTurnstile } from "@/lib/security/turnstile";
+import { actionMetaSchema } from "@/lib/validation/meta";
 import {
   CONSENT_VERSION,
   evidenceConfirmSchema,
@@ -39,7 +43,10 @@ async function ownsReport(userId: string, reportId: string): Promise<boolean> {
   return data !== null;
 }
 
-export async function submitReport(input: unknown): Promise<ActionResult<{ reportId: string }>> {
+export async function submitReport(
+  input: unknown,
+  meta?: unknown,
+): Promise<ActionResult<{ reportId: string }>> {
   const parsed = reportSubmitSchema.safeParse(input);
   if (!parsed.success) {
     const consentIssue = parsed.error.issues.some((i) => i.path[0] === "consent");
@@ -50,7 +57,12 @@ export async function submitReport(input: unknown): Promise<ActionResult<{ repor
   const user = await getCurrentUser();
   if (!user) return fail("signInRequired");
 
-  // Phase 5: verify Turnstile token + Upstash per-user/IP rate limit here.
+  if (!(await withinLimits(["reportUser", user.id], ["reportIp", await clientIpHash()]))) {
+    return fail("rateLimited");
+  }
+  if (!(await verifyTurnstile(actionMetaSchema.parse(meta)?.turnstileToken, "report"))) {
+    return fail("botCheckFailed");
+  }
 
   // Normalise server-side (never trust the client) and de-duplicate.
   const identifiers = new Map<string, NormalizedIdentifier>();
@@ -102,6 +114,7 @@ export async function createEvidenceUpload(
   const user = await getCurrentUser();
   if (!user) return fail("signInRequired");
   if (!isStorageConfigured()) return fail("storageUnavailable");
+  if (!(await withinLimits(["uploadUser", user.id]))) return fail("rateLimited");
   if (!(await ownsReport(user.id, v.reportId))) return fail("notFound");
 
   const supabase = await createClient();

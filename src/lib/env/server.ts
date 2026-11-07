@@ -32,6 +32,8 @@ const schema = z.object({
 
   // Phase 5: abuse protection, email, monitoring
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  // Test-only override of Cloudflare's siteverify endpoint (local fake).
+  TURNSTILE_VERIFY_URL: z.url().optional(),
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   RATE_LIMIT_SALT: z.string().min(16).optional(),

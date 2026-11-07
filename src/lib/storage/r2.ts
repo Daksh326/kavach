@@ -121,3 +121,44 @@ export async function deleteObject(key: string): Promise<boolean> {
   const res = await c.client.fetch(objectUrl(c, key), { method: "DELETE" });
   return res.ok || res.status === 404;
 }
+
+/**
+ * Lists objects under a prefix (S3 ListObjectsV2). Returns at most `max`
+ * keys with their last-modified time. Parsed with a regex (the XML is flat),
+ * keeping Worker CPU low.
+ */
+export async function listObjects(
+  prefix: string,
+  max = 1000,
+): Promise<{ key: string; lastModified: Date }[]> {
+  const c = requireConfig();
+  const out: { key: string; lastModified: Date }[] = [];
+  let token: string | undefined;
+  do {
+    const url = new URL(`${c.endpoint}/${c.bucket}`);
+    url.searchParams.set("list-type", "2");
+    url.searchParams.set("prefix", prefix);
+    url.searchParams.set("max-keys", String(Math.min(1000, max - out.length)));
+    if (token) url.searchParams.set("continuation-token", token);
+    const res = await c.client.fetch(url);
+    if (!res.ok) throw new Error(`R2 list failed: ${res.status}`);
+    const xml = await res.text();
+    for (const m of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
+      const key = /<Key>([\s\S]*?)<\/Key>/.exec(m[1])?.[1];
+      const lm = /<LastModified>([\s\S]*?)<\/LastModified>/.exec(m[1])?.[1];
+      if (key && lm) out.push({ key: decodeXml(key), lastModified: new Date(lm) });
+    }
+    token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+      ? /<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/.exec(xml)?.[1]
+      : undefined;
+  } while (token && out.length < max);
+  return out;
+}
+
+const decodeXml = (s: string) =>
+  s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");

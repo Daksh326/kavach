@@ -50,6 +50,8 @@ import {
 import { emptyReportForm, reportFormSchema, type ReportFormValues } from "@/lib/validation/report";
 import { clearReportPrefill, readReportPrefill } from "@/lib/report/prefill";
 import { getSessionStatus, submitReport } from "@/app/[locale]/report/actions";
+import { Turnstile, useTurnstile } from "@/components/security/turnstile";
+import { track } from "@/lib/analytics/track";
 import { FieldError, RadioCard, selectClass } from "./fields";
 
 const E = Constants.public.Enums;
@@ -74,22 +76,6 @@ const STEPS = [
   { id: "review", fields: [] },
 ] as const;
 const REVIEW = STEPS.length - 1;
-
-const KNOWN_ERRORS = new Set([
-  "required",
-  "invalidIdentifier",
-  "invalidDate",
-  "invalidAmount",
-  "invalidLast4",
-  "invalidTransactionRef",
-  "consentRequired",
-  "rateLimited",
-  "serviceUnavailable",
-  "uploadFailed",
-  "storageUnavailable",
-  "evidenceLimit",
-  "notFound",
-]);
 
 /** Client-only (rendered with ssr:false), so reading storage/URL here is safe. */
 function initialState() {
@@ -152,6 +138,7 @@ export function ReportWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState<{ current: number; total: number } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [bot, botRef] = useTurnstile();
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -193,6 +180,10 @@ export function ReportWizard() {
   useEffect(() => clearReportPrefill(), []);
 
   useEffect(() => {
+    track("report_step_viewed", { step: STEPS[step].id });
+  }, [step]);
+
+  useEffect(() => {
     let cancelled = false;
     listDraftFiles().then((f) => !cancelled && setFiles(f));
     // A tiny Server Action instead of shipping supabase-js to the browser.
@@ -204,8 +195,9 @@ export function ReportWizard() {
     };
   }, []);
 
+  // Any error key with a message in report.errors is shown; unknown keys fall back.
   const err = (msg?: string) =>
-    msg ? tx(`errors.${KNOWN_ERRORS.has(msg) ? msg : "required"}`) : undefined;
+    msg ? tx(`errors.${t.has(`errors.${msg}` as never) ? msg : "serviceUnavailable"}`) : undefined;
 
   const removedKinds = useMemo(
     () => stripSensitive(values.description ?? "").removed,
@@ -261,13 +253,19 @@ export function ReportWizard() {
   async function onSubmit() {
     setSubmitError(null);
     setSubmitting(true);
-    const res = await submitReport(getValues());
+    const res = await submitReport(getValues(), { turnstileToken: bot.token });
+    bot.reset(); // single-use token
     if (!res.ok) {
       setSubmitting(false);
       if (res.error === "signInRequired") return goToLogin();
       return setSubmitError(res.error);
     }
     finished.current = true;
+    track("report_submitted", {
+      category: getValues("category"),
+      lost_money: getValues("lostMoney") === "yes",
+      evidence_files: files.length,
+    });
     let failed = 0;
     for (const [i, f] of files.entries()) {
       setUploading({ current: i + 1, total: files.length });
@@ -738,23 +736,26 @@ export function ReportWizard() {
                 </Button>
               </div>
             ) : (
-              <Button
-                type="button"
-                size="lg"
-                className="h-12 w-full text-base"
-                disabled={submitting || signedIn === null}
-                onClick={onSubmit}
-              >
-                {submitting && <Loader2 className="animate-spin" aria-hidden />}
-                {uploading
-                  ? t("steps.review.uploading", {
-                      current: String(uploading.current),
-                      total: String(uploading.total),
-                    })
-                  : submitting
-                    ? t("steps.review.submitting")
-                    : t("steps.review.submit")}
-              </Button>
+              <>
+                <Turnstile ref={botRef} action="report" onToken={bot.onToken} />
+                <Button
+                  type="button"
+                  size="lg"
+                  className="h-12 w-full text-base"
+                  disabled={submitting || signedIn === null || !bot.ready}
+                  onClick={onSubmit}
+                >
+                  {submitting && <Loader2 className="animate-spin" aria-hidden />}
+                  {uploading
+                    ? t("steps.review.uploading", {
+                        current: String(uploading.current),
+                        total: String(uploading.total),
+                      })
+                    : submitting
+                      ? t("steps.review.submitting")
+                      : t("steps.review.submit")}
+                </Button>
+              </>
             )}
           </div>
         )}

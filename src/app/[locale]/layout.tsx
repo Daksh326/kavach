@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import { pickMessages } from "@/i18n/client-messages";
 import { routing } from "@/i18n/routing";
 import { publicEnv } from "@/lib/env/public";
 import { SiteHeader } from "@/components/site-header";
+import { OfflineBanner, ServiceWorkerRegister } from "@/components/pwa/pwa";
+import { Observability } from "@/components/monitoring/observability";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -22,6 +25,8 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
     title: { default: t("title"), template: "%s · Kavach" },
     description: t("description"),
     alternates: { languages: { en: "/en", hi: "/hi", "x-default": "/" } },
+    icons: { apple: "/icons/apple-touch-icon.png" },
+    appleWebApp: { capable: true, title: "Kavach", statusBarStyle: "default" },
   };
 }
 
@@ -50,7 +55,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         >
           {t("skipToContent")}
         </a>
-        <NextIntlClientProvider>
+        <NextIntlClientProvider
+          messages={pickMessages(await getMessages(), ["common", "offline", "errorPage"])}
+        >
+          <OfflineBanner />
+          <ServiceWorkerRegister />
+          <Observability />
           <SiteHeader />
           <main id="main" className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
             {children}

@@ -11,34 +11,17 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { emailSchema } from "@/lib/validation/auth";
+import { Turnstile, useTurnstile } from "@/components/security/turnstile";
 import { sendOtp, signInWithGoogle, verifyOtp } from "./actions";
 
-type ErrorKey =
-  | "invalidEmail"
-  | "invalidCode"
-  | "wrongCode"
-  | "tooManyAttempts"
-  | "oauthFailed"
-  | "serviceUnavailable";
-
-const KNOWN_ERRORS = new Set<string>([
-  "invalidEmail",
-  "invalidCode",
-  "wrongCode",
-  "tooManyAttempts",
-  "oauthFailed",
-  "serviceUnavailable",
-]);
-const toErrorKey = (e: string): ErrorKey =>
-  (KNOWN_ERRORS.has(e) ? e : "serviceUnavailable") as ErrorKey;
-
-export function LoginForm({ next, initialError }: { next: string; initialError?: ErrorKey }) {
+export function LoginForm({ next, initialError }: { next: string; initialError?: string }) {
   const t = useTranslations("auth");
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [error, setError] = useState<ErrorKey | undefined>(initialError);
+  const [error, setError] = useState<string | undefined>(initialError);
   const [pending, startTransition] = useTransition();
+  const [bot, botRef] = useTurnstile();
 
   const form = useForm<{ email: string }>({
     resolver: zodResolver(emailSchema),
@@ -48,8 +31,9 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
   const onSendCode = form.handleSubmit((values) => {
     setError(undefined);
     startTransition(async () => {
-      const res = await sendOtp(values);
-      if (!res.ok) return setError(toErrorKey(res.error));
+      const res = await sendOtp(values, { turnstileToken: bot.token });
+      bot.reset(); // single-use token
+      if (!res.ok) return setError(res.error);
       setEmail(res.data.email);
       setCode("");
       setStep("code");
@@ -63,7 +47,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
       // On success the action redirects; we only get a value back on failure.
       const res = await verifyOtp({ email, token, next });
       if (res && !res.ok) {
-        setError(toErrorKey(res.error));
+        setError(res.error);
         // Clear so the next entry (typed or pasted) re-triggers onComplete.
         setCode("");
       }
@@ -74,7 +58,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
     setError(undefined);
     startTransition(async () => {
       const res = await signInWithGoogle({ next });
-      if (res && !res.ok) setError(toErrorKey(res.error));
+      if (res && !res.ok) setError(res.error);
     });
   };
 
@@ -83,7 +67,12 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
       {error && (
         <Alert variant="destructive" aria-live="assertive">
           <AlertCircle aria-hidden />
-          <AlertDescription>{t(`errors.${error}`)}</AlertDescription>
+          {/* Any key with a message in auth.errors is shown; unknown keys fall back. */}
+          <AlertDescription>
+            {(t as unknown as (k: string) => string)(
+              `errors.${t.has(`errors.${error}` as never) ? error : "serviceUnavailable"}`,
+            )}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -110,7 +99,13 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
               </p>
             )}
           </div>
-          <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={pending}>
+          <Turnstile ref={botRef} action="login" onToken={bot.onToken} />
+          <Button
+            type="submit"
+            size="lg"
+            className="h-12 w-full text-base"
+            disabled={pending || !bot.ready}
+          >
             {pending && <Loader2 className="animate-spin" aria-hidden />}
             {pending ? t("sending") : t("sendCode")}
           </Button>

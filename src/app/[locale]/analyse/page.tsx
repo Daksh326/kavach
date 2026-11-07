@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClientMessages } from "@/i18n/client-messages";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AnalyseLoader } from "@/components/analyse/analyse-loader";
 import { RedFlags } from "@/components/red-flags";
@@ -22,7 +23,9 @@ export default async function AnalysePage({ params }: PageProps<"/[locale]/analy
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
-      <AnalyseLoader />
+      <ClientMessages namespaces={["analyse", "categories"]}>
+        <AnalyseLoader />
+      </ClientMessages>
       <RedFlags />
     </div>
   );

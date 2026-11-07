@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClientMessages } from "@/i18n/client-messages";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ReportWizardLoader } from "@/components/report/report-wizard-loader";
 
@@ -21,7 +22,9 @@ export default async function ReportPage({ params }: PageProps<"/[locale]/report
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
-      <ReportWizardLoader />
+      <ClientMessages namespaces={["report", "categories", "channels", "paymentMethods"]}>
+        <ReportWizardLoader />
+      </ClientMessages>
     </div>
   );
 }

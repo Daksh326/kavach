@@ -9,6 +9,10 @@ import { getCurrentProfile, getCurrentUser } from "@/lib/auth/dal";
 import { redactForAI, type PiiKind } from "@/lib/redact/pii";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ANALYSE_IMAGE_MAX_BYTES, analyseInputSchema } from "@/lib/validation/analyse";
+import { clientIpHash } from "@/lib/security/client-ip";
+import { withinLimits } from "@/lib/security/rate-limit";
+import { verifyTurnstile } from "@/lib/security/turnstile";
+import { actionMetaSchema } from "@/lib/validation/meta";
 
 export type AnalyseResult = {
   analysis: ScamAnalysis;
@@ -42,15 +46,29 @@ function sniffImage(bytes: Uint8Array, mime: string): boolean {
   return false;
 }
 
-export async function analyseMessage(input: unknown): Promise<ActionResult<AnalyseResult>> {
+export async function analyseMessage(
+  input: unknown,
+  meta?: unknown,
+): Promise<ActionResult<AnalyseResult>> {
   const parsed = analyseInputSchema.safeParse(input);
   if (!parsed.success) return fail("invalidInput");
   if (!isAiConfigured()) return fail("aiNotConfigured");
 
-  // Phase 5: verify Turnstile token + Upstash per-user/IP rate limit here.
-
   const locale = (await getLocale()) === "hi" ? "hi" : "en";
-  const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()]);
+  const [user, profile, ipHash] = await Promise.all([
+    getCurrentUser(),
+    getCurrentProfile(),
+    clientIpHash(),
+  ]);
+
+  // Signed-in users are limited per account, everyone else per (hashed) IP.
+  const actor = user ? `u:${user.id}` : `ip:${ipHash}`;
+  if (!(await withinLimits(["analyseActor", actor], ["analyseDaily", actor])))
+    return fail("aiRateLimited");
+  if (!(await verifyTurnstile(actionMetaSchema.parse(meta)?.turnstileToken, "analyse"))) {
+    return fail("botCheckFailed");
+  }
+
   const model = getProvider().model;
 
   let aiInput: AnalyseInput;

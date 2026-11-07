@@ -67,6 +67,17 @@ src/components/analyse/         analyser client island (ssr:false), result view
 src/lib/analyse/image.ts        in-browser screenshot shrink (JPEG, <=1600px)
 src/lib/report/prefill.ts       one-shot sessionStorage handoff into the wizard ("Report this")
 scripts/ai-check.ts             AI setup checker
+src/lib/security/               client-ip.ts (cf-connecting-ip + HMAC), rate-limit.ts (all POLICIES), turnstile.ts
+src/components/security/        Turnstile widget + useTurnstile() -> [state, ref]
+src/app/[locale]/admin/         moderation queue, identifier detail (hide/unhide/merge), actions
+src/app/[locale]/check/actions.ts  flagIdentifier (public entries only)
+src/lib/jobs/daily.ts           cron: heartbeat, R2 queue purge, orphan objects, AI cache expiry
+src/lib/monitoring/             Sentry via envelope API (sentry-core shared, server.ts, client.ts)
+src/instrumentation.ts          onRequestError -> Sentry (works on OpenNext/workerd)
+src/lib/analytics/track.ts      PostHog capture API, anonymous events only
+src/i18n/client-messages.tsx    <ClientMessages namespaces> = only what client islands need
+public/sw.js, public/_headers   service worker (offline emergency pages), static asset headers
+scripts/dev/upstash-shim.mjs    lets open-source Redis run @upstash/ratelimit scripts (tests)
 scripts/r2-check.ts             storage setup checker
 public/fonts/                   Noto Sans + Noto Sans Devanagari (OFL) for the PDF only
 src/components/ui/              shadcn components (generated; edit sparingly)
@@ -137,6 +148,25 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
 - **Client-only islands** (`ssr:false`) must reserve their real height in the
   loading placeholder, or the swap causes layout shift (it cost the wizard
   ~10 Lighthouse points).
+- **Protected write actions** take `(input, meta)` where meta carries the
+  Turnstile token. Order inside: Zod parse -> auth -> `withinLimits()` ->
+  `verifyTurnstile(token, action)` -> work. Rate limits fail OPEN (never lock a
+  victim out over our infra); Turnstile fails CLOSED. Client forms use
+  `const [bot, botRef] = useTurnstile()`, disable submit until `bot.ready`, and
+  call `bot.reset()` after every attempt (tokens are single-use). Sign-in passes
+  the token to Supabase (`captchaToken`), which verifies it itself.
+- **Error keys in client components**: never keep a hand-written list of known
+  keys; use `t.has(\`errors.${key}\`)` and fall back to a generic message (three
+  hand-kept lists drifted and showed the wrong message).
+- **Translations sent to the browser**: the layout passes only
+  common/offline/errorPage. A page with client islands wraps them in
+  `<ClientMessages namespaces={[...]}>` listing exactly what they use.
+  Forgetting a namespace shows raw keys: the E2E suites check visible text.
+- **Analytics**: `track()` events carry coarse labels only (kind, risk,
+  category, counts). Never identifiers, text, ids or query strings.
+- **Moderation**: admin pages call `requireAdmin()` (404 for non-admins) and
+  act as the admin via RLS (no service role). Never select reporter
+  identities (`user_id`, `flagged_by`) in admin queries.
 - **Formatting**: Prettier (`pnpm format`), printWidth 100.
 
 ## Database rules
@@ -188,7 +218,9 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   populates it — plain `wrangler dev` does not.
 - `input-otp` fires `onComplete` only when the value grows to full length —
   clear the value after a failed attempt.
-- **Worker size budget (free plan: 3 MiB gzip).** Currently ~2.0 MiB. Next's
+- **Worker size budget (free plan: 3 MiB gzip).** Currently ~2.18 MiB. The
+  message catalogs are duplicated across several server chunks (~100 KB gz):
+  the first thing to dedupe if the budget gets tight. Next's
   server build traces even click-time `import()`s in client components. Heavy
   browser-only libraries (react-pdf, ~1.7 MB) must be reached only through a
   `next/dynamic(..., { ssr: false })` boundary (see `pdf-button-loader.tsx`).
@@ -207,6 +239,18 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   a suite that fails to import shows 0 tests, not a failed test.
 - Keep tldts / supabase-js out of client bundles: the browser uses
   `identifiers/basic.ts` (no public-suffix list) and Server Actions for auth state.
+- Sentry/PostHog use their HTTP APIs, not SDKs (bundle budget). Server code
+  reaches the request's `waitUntil` via `globalThis[Symbol.for("__cloudflare-context__")]`
+  instead of importing @opennextjs/cloudflare.
+- `@upstash/ratelimit` keeps an in-memory cache of blocked keys per isolate:
+  flushing Redis doesn't unblock a running worker. Restart the preview between
+  test runs that hit limits.
+- Upstash's Lua scripts use a `#!lua flags=allow-key-locking` header that
+  open-source Redis rejects; scripts/dev/upstash-shim.mjs strips it for tests.
+- Cloudflare Static Assets serve `public/` directly (Next `headers()` don't
+  apply there); use `public/_headers` for those files (e.g. sw.js no-cache).
+- Playwright `waitForFunction` does not await async predicates; poll with
+  `page.evaluate` in a loop when the check is async (caches, SW state).
 
 ## Phase status
 1. ✅ Setup: scaffold, OpenNext/Wrangler, Supabase schema + RLS + RPCs + seed +
@@ -217,5 +261,6 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
    HMAC ticket) + report page (complaint text en/hi, PDF, status) + dashboard (export, delete)
 4. ✅ /analyse (text + screenshot) with Gemini behind `analyseScam()`, PII redaction, cache,
    identifier lookup + risk floor, "Report this" prefill; `pnpm ai:check`
-5. ⏳ Admin moderation, flags, Turnstile, rate limits, PWA/offline, Sentry, PostHog, cron jobs
+5. ✅ Admin moderation + flags, Turnstile (fail closed), Upstash rate limits (fail open),
+   PWA + offline emergency pages, Sentry + PostHog (lightweight, no PII), daily cron jobs
 6. ⏳ Vitest/Playwright suites, deploy, full README

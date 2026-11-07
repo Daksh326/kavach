@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { serverEnv } from "@/lib/env/server";
+import { runDailyJob } from "@/lib/jobs/daily";
 
 /** Constant-time string comparison (avoids leaking the secret via timing). */
 function safeEqual(a: string, b: string) {
@@ -12,11 +12,7 @@ function safeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-/**
- * Daily maintenance, invoked by the Cron Trigger in custom-worker.ts.
- * Phase 1: Supabase heartbeat (keeps the free project from pausing).
- * Phase 5 adds: R2 deletion-queue purge, stale-data cleanup.
- */
+/** Daily maintenance, invoked by the Cron Trigger in custom-worker.ts. See src/lib/jobs/daily.ts. */
 export async function POST(request: NextRequest) {
   const secret = serverEnv().CRON_SECRET;
   const auth = request.headers.get("authorization") ?? "";
@@ -24,11 +20,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const supabase = createAdminClient();
-  const { data, error } = await supabase.rpc("cron_heartbeat");
-  if (error) {
-    console.error("cron heartbeat failed", error.message);
-    return NextResponse.json({ ok: false }, { status: 502 });
-  }
-  return NextResponse.json({ ok: true, heartbeat: data });
+  const result = await runDailyJob();
+  if (result.errors.length) console.error("daily job errors", result.errors);
+  return NextResponse.json(
+    { ok: result.errors.length === 0, ...result },
+    { status: result.errors.length ? 500 : 200 },
+  );
 }

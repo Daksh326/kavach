@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClientMessages } from "@/i18n/client-messages";
 import { AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -7,6 +8,8 @@ import { CheckForm } from "@/components/check/check-form";
 import { CheckResult } from "@/components/check/check-result";
 import { detectIdentifier } from "@/lib/identifiers/normalize";
 import { lookupIdentifiers } from "@/lib/identifiers/lookup";
+import { clientIpHash } from "@/lib/security/client-ip";
+import { withinLimits } from "@/lib/security/rate-limit";
 
 const searchSchema = z.object({
   q: z.string().max(2000).optional().catch(undefined),
@@ -34,10 +37,18 @@ export default async function CheckPage({ params, searchParams }: PageProps<"/[l
   const { q } = searchSchema.parse(sp);
 
   const detected = q !== undefined ? detectIdentifier(q) : null;
-  const lookup = detected?.ok ? await lookupIdentifiers(detected.lookups) : null;
+  // Limits bulk enumeration of the database (60 lookups/minute per IP).
+  const allowed = detected?.ok ? await withinLimits(["lookupIp", await clientIpHash()]) : true;
+  const lookup = detected?.ok && allowed ? await lookupIdentifiers(detected.lookups) : null;
 
   const errorKey =
-    detected && !detected.ok ? detected.error : lookup && !lookup.ok ? lookup.error : null;
+    detected && !detected.ok
+      ? detected.error
+      : !allowed
+        ? "rateLimited"
+        : lookup && !lookup.ok
+          ? lookup.error
+          : null;
 
   return (
     <div className="space-y-6">
@@ -59,7 +70,9 @@ export default async function CheckPage({ params, searchParams }: PageProps<"/[l
       )}
 
       {detected?.ok && lookup?.ok && (
-        <CheckResult detected={detected} hits={lookup.hits} similar={lookup.similar} />
+        <ClientMessages namespaces={["flag"]}>
+          <CheckResult detected={detected} hits={lookup.hits} similar={lookup.similar} />
+        </ClientMessages>
       )}
 
       <p className="border-t pt-4 text-xs text-muted-foreground">{t("disclaimer")}</p>

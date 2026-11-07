@@ -55,7 +55,8 @@
       "wrongCode": "That code is wrong or has expired. Check the latest email or ask for a new code.",
       "tooManyAttempts": "Too many attempts. Please wait a minute and try again.",
       "oauthFailed": "Google sign-in did not complete. Please try again or use email.",
-      "serviceUnavailable": "We can't reach our sign-in service right now. Please try again in a moment."
+      "serviceUnavailable": "We can't reach our sign-in service right now. Please try again in a moment.",
+      "botCheckFailed": "We couldn't confirm you're not a bot. Please wait a moment and try again."
     }
   },
   "dashboard": {
@@ -76,7 +77,8 @@
     "deleteWord": "DELETE",
     "deleteButton": "Delete everything",
     "deleting": "Deleting…",
-    "deleteFailed": "We couldn't delete your data right now. Please try again."
+    "deleteFailed": "We couldn't delete your data right now. Please try again.",
+    "adminLink": "Moderation (admin)"
   },
   "notFound": {
     "title": "Page not found",
@@ -175,7 +177,8 @@
       "ip_address": "Links that use a bare IP address (like 192.168.1.1) can't be checked. Treat them as very suspicious.",
       "unsupported_scheme": "Only website links (starting with http or https) can be checked.",
       "invalid": "That link doesn't look right. Check it and try again.",
-      "unavailable": "We couldn't check right now. Please try again in a moment. If you've lost money, don't wait: call 1930."
+      "unavailable": "We couldn't check right now. Please try again in a moment. If you've lost money, don't wait: call 1930.",
+      "rateLimited": "Too many checks in a short time. Please wait a minute and try again."
     },
     "kinds": {
       "phone": "Phone number",
@@ -280,7 +283,9 @@
       "aiBusy": "The AI checker is busy right now. Please try again in a minute.",
       "aiUnavailable": "We couldn't reach the AI service. Please try again in a moment.",
       "aiBlocked": "The AI service couldn't analyse this. Use the warning signs below to judge it, or check the numbers and links in it.",
-      "aiBadResponse": "The AI gave an answer we couldn't read. Please try again."
+      "aiBadResponse": "The AI gave an answer we couldn't read. Please try again.",
+      "aiRateLimited": "You've checked a lot of messages in a short time. Please wait a few minutes and try again.",
+      "botCheckFailed": "We couldn't confirm you're not a bot. Please wait a moment and try again."
     }
   },
   "categories": {
@@ -469,7 +474,8 @@
       "uploadFailed": "Some files couldn't be uploaded. You can add them again from your report page.",
       "storageUnavailable": "File uploads aren't available right now. Your report is saved; try adding files later.",
       "evidenceLimit": "This report already has 10 files.",
-      "notFound": "We couldn't find that report."
+      "notFound": "We couldn't find that report.",
+      "botCheckFailed": "We couldn't confirm you're not a bot. Please wait a moment and tap Submit again."
     }
   },
   "reportPage": {
@@ -509,5 +515,81 @@
     "deleteConfirm": "Yes, delete it",
     "cancel": "Cancel",
     "deleting": "Deleting…"
+  },
+  "flag": {
+    "open": "Is this wrong? Flag it",
+    "title": "Why should a moderator look at this?",
+    "reasons": {
+      "wrong_number": "It isn't a scam",
+      "my_identifier": "This is my number or ID",
+      "abusive": "Abusive or harassing entry",
+      "duplicate": "Duplicate of another entry",
+      "other": "Something else"
+    },
+    "detailsLabel": "Details (optional). Don't include personal information.",
+    "submit": "Send to moderators",
+    "cancel": "Cancel",
+    "thanks": "Thanks. A moderator will review this entry.",
+    "errors": {
+      "chooseReason": "Please choose a reason.",
+      "invalid": "Something was wrong with the form. Please try again.",
+      "rateLimited": "You've sent many flags recently. Please try again later.",
+      "botCheckFailed": "We couldn't confirm you're not a bot. Please wait a moment and try again.",
+      "notFlaggable": "This entry can't be flagged.",
+      "unavailable": "We couldn't send this right now. Please try again in a moment."
+    }
+  },
+  "admin": {
+    "title": "Moderation",
+    "intro": "Review flagged entries, hide abusive ones and merge duplicates. Reporters' identities are never shown.",
+    "searchTitle": "Find an entry",
+    "searchPlaceholder": "Number, UPI ID, domain…",
+    "search": "Search",
+    "noResults": "No entries match.",
+    "queueTitle": "Open flags",
+    "queueEmpty": "No open flags. All caught up.",
+    "reporters": "{count, plural, one {# reporter} other {# reporters}}",
+    "reports": "{count, plural, one {# report} other {# reports}}",
+    "hidden": "hidden",
+    "merged": "merged",
+    "hideEntry": "Hide entry",
+    "dismissFlag": "Dismiss flag",
+    "actionFailed": "That didn't work. Try again.",
+    "back": "Moderation",
+    "seen": "First reported {first} · last reported {last}",
+    "visibility": "Public visibility",
+    "visibleHint": "Shown in public lookup once 2 or more people have reported it.",
+    "hiddenHint": "Hidden: public lookup says \"no reports\" for this entry.",
+    "hide": "Hide from public lookup",
+    "unhide": "Show in public lookup again",
+    "mergeTitle": "Merge duplicate",
+    "mergeHint": "Merge this entry into the correct one. Its reports move there, and lookups of this value show the correct entry.",
+    "mergeType": "Type",
+    "mergePlatform": "Platform",
+    "mergeTarget": "Correct value",
+    "mergeButton": "Merge",
+    "reportsTitle": "What people reported",
+    "flagsTitle": "Flags",
+    "noFlags": "No flags.",
+    "errors": {
+      "invalid": "Check the form and try again.",
+      "forbidden": "Admins only.",
+      "invalidTarget": "That value isn't valid for the chosen type.",
+      "targetNotFound": "No entry with that value exists.",
+      "sameIdentifier": "That's the same entry.",
+      "cannotMerge": "These entries can't be merged.",
+      "notFound": "Entry not found.",
+      "unavailable": "Something went wrong. Try again."
+    }
+  },
+  "offline": {
+    "banner": "You're offline. The emergency steps still work.",
+    "openEmergency": "Open emergency steps"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "body": "Sorry, this page didn't load properly. If you've lost money, don't wait: call 1930 now.",
+    "retry": "Try again",
+    "home": "Go to home page"
   }
 }

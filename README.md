@@ -3,7 +3,8 @@
 Victim-first scam help for India: emergency steps, lookup of reported phone
 numbers / UPI IDs / links, AI scam check, and complaint text generation.
 
-> Status: **Phase 4** (AI message and screenshot checker, on top of reports, lookup and emergency help). See `CLAUDE.md` for architecture
+> Status: **Phase 5** (moderation, abuse protection, offline mode, monitoring), on top of
+> reports, lookup, the AI checker and emergency help. See `CLAUDE.md` for architecture
 > and conventions. This README grows with each phase.
 
 ---
@@ -122,6 +123,20 @@ Then open http://localhost:3000/en/analyse:
 - "Report this" opens the report wizard already filled in.
 
 Without a key, the page says the AI checker isn't available; everything else works.
+
+### Try Phase 5
+
+- **Flags:** on a reported result in `/en/check` (e.g. `60000 00101`), tap
+  "Is this wrong? Flag it".
+- **Moderation:** sign in as `admin@kavach.test`, open "Moderation (admin)" on
+  the dashboard (or `/en/admin`): hide or dismiss flags, search entries, merge
+  duplicates.
+- **Offline:** run `pnpm cf:preview`, open http://localhost:8787 once, then
+  switch the browser to offline (DevTools → Network → Offline) and open
+  `/en/emergency` or any other page. The emergency steps still load.
+- **Bot checks and rate limits** are off locally unless you set the Turnstile
+  and Upstash variables (see 2.5). To try real rate limits without an Upstash
+  account, see the comment at the top of `src/lib/security/rate-limit.test.ts`.
 
 ### Run on the real Cloudflare runtime locally
 
@@ -251,7 +266,32 @@ Put them in `.env.local` (for local dev) as `R2_ACCOUNT_ID`,
    Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
 3. Supabase → Authentication → Providers → Google: paste the client ID and secret, enable.
 
-### 2.4 Configure and deploy
+### 2.4 Abuse protection, monitoring, analytics (Phase 5)
+
+**Turnstile (bot checks)**, in the Cloudflare dashboard: Turnstile → Add widget.
+Name "Kavach", hostname = your site's host (e.g. `kavach.yourname.workers.dev`),
+widget mode **Managed**. Copy the site key and secret key. Then turn on Supabase's
+own check for sign-in emails: Supabase → Authentication → Attack Protection →
+**Enable CAPTCHA protection**, provider **Turnstile**, paste the **secret** key.
+(Kavach sends the token with every sign-in request; Supabase verifies it, so
+the sign-in API can't be abused directly.)
+
+**Upstash (rate limits)**: https://console.upstash.com → Create database
+(Redis, free, region close to Mumbai). Copy the **REST URL** and **REST token**.
+
+**Sentry (errors)**: https://sentry.io → create a project, platform
+"Browser JavaScript". Copy the **DSN** (Settings → Client Keys). In project
+Settings → Security & Privacy, turn on **Prevent Storing of IP Addresses** and
+**Data Scrubber**.
+
+**PostHog (analytics)**: https://posthog.com (EU cloud is fine). Copy the
+**Project API key** (starts with `phc_`) and the host (`https://eu.i.posthog.com`
+or `https://us.i.posthog.com`).
+
+Kavach sends only anonymous events: no cookies, no user identities, nothing anyone typed,
+and nothing when the browser asks not to be tracked (Global Privacy Control / Do Not Track).
+
+### 2.5 Configure and deploy
 
 Public values are baked in at build time. Create `.env.production`
 (git-ignored) with:
@@ -260,6 +300,10 @@ Public values are baked in at build time. Create `.env.production`
 NEXT_PUBLIC_SITE_URL=https://<your-worker>.workers.dev
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x...
+NEXT_PUBLIC_SENTRY_DSN=https://...@....ingest.sentry.io/...
+NEXT_PUBLIC_POSTHOG_KEY=phc_...
+NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
 ```
 
 Server secrets go into Wrangler (each command prompts for the value):
@@ -276,6 +320,29 @@ The Gemini key (step "Try Phase 4"):
 
 ```bash
 pnpm wrangler secret put GEMINI_API_KEY
+```
+
+The Phase 5 secrets, one at a time (use the same Sentry DSN as above for `SENTRY_DSN`;
+for `RATE_LIMIT_SALT` paste the output of `openssl rand -hex 32`):
+
+```bash
+pnpm wrangler secret put TURNSTILE_SECRET_KEY
+```
+
+```bash
+pnpm wrangler secret put UPSTASH_REDIS_REST_URL
+```
+
+```bash
+pnpm wrangler secret put UPSTASH_REDIS_REST_TOKEN
+```
+
+```bash
+pnpm wrangler secret put RATE_LIMIT_SALT
+```
+
+```bash
+pnpm wrangler secret put SENTRY_DSN
 ```
 
 Then the four R2 values from step 2.2, one at a time:
@@ -305,6 +372,28 @@ pnpm cf:deploy
 The first deploy prints your `*.workers.dev` URL. If it differs from what you
 put in `NEXT_PUBLIC_SITE_URL` / Supabase URL configuration, update both and
 deploy again.
+
+### 2.6 Verify after deploying
+
+- **Daily job**: Cloudflare runs it at 03:00 IST. To run it now:
+
+  ```bash
+  curl -X POST -H "authorization: Bearer YOUR_CRON_SECRET" https://<your-worker>.workers.dev/api/cron/daily
+  ```
+
+  It should answer `"ok":true`.
+- **Sentry**: this endpoint throws on purpose; an error titled "Kavach
+  monitoring test error" should appear in Sentry within a minute:
+
+  ```bash
+  curl -X POST -H "authorization: Bearer YOUR_CRON_SECRET" https://<your-worker>.workers.dev/api/debug/error
+  ```
+
+- **Turnstile**: sign in, submit a report, and run the AI checker. If the widget
+  is misconfigured you'll see "We couldn't confirm you're not a bot".
+- **PostHog**: open a few pages; events appear under Activity in a minute or two.
+- **Offline**: on your phone, open the site once, turn on airplane mode, and
+  open it again. The emergency steps should still load.
 
 ---
 

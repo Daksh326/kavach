@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { getLocale } from "next-intl/server";
+import { notFound } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,3 +43,20 @@ export const getCurrentProfile = cache(async () => {
     .single();
   return data;
 });
+
+/**
+ * Admin pages and actions. Non-admins get a 404 (the admin area's existence
+ * isn't advertised). RLS enforces the same rule in the database.
+ */
+export async function requireAdmin(nextPath: string) {
+  const user = await requireUser(nextPath);
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") notFound();
+  return user;
+}
+
+/** For Server Actions: returns the admin user or null (no redirects). */
+export async function getAdminUser(): Promise<SessionUser | null> {
+  const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()]);
+  return user && profile?.role === "admin" ? user : null;
+}

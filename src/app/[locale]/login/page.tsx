@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClientMessages } from "@/i18n/client-messages";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { safeNextPath } from "@/lib/validation/auth";
@@ -26,7 +27,9 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
         <CardDescription className="text-base">{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <LoginForm next={next} initialError={initialError} />
+        <ClientMessages namespaces={["auth"]}>
+          <LoginForm next={next} initialError={initialError} />
+        </ClientMessages>
       </CardContent>
     </Card>
   );

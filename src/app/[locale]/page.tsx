@@ -1,4 +1,5 @@
 import { ChevronRight, FilePen, Phone, Siren } from "lucide-react";
+import { ClientMessages } from "@/i18n/client-messages";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { CheckForm } from "@/components/check/check-form";
@@ -59,7 +60,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           <h2 className="text-lg font-bold">{t("analyseTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("analyseHint")}</p>
         </div>
-        <AnalyseBox />
+        <ClientMessages namespaces={["home"]}>
+          <AnalyseBox />
+        </ClientMessages>
       </section>
 
       <RedFlags />
