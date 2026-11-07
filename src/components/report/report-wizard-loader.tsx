@@ -10,7 +10,8 @@ export const ReportWizardLoader = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex justify-center py-12">
+      // Reserve roughly the real height so swapping in the form causes no layout shift.
+      <div className="flex min-h-[60rem] justify-center pt-12">
         <Loader2 className="size-8 animate-spin text-muted-foreground" aria-hidden />
       </div>
     ),

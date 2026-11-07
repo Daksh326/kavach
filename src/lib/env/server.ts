@@ -27,6 +27,8 @@ const schema = z.object({
   // Phase 4: AI analysis
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).optional(),
+  // Test-only override of https://generativelanguage.googleapis.com (local fake server).
+  GEMINI_API_BASE: z.url().optional(),
 
   // Phase 5: abuse protection, email, monitoring
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),

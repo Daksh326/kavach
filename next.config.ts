@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // No image optimisation service on the free tier; images are pre-sized.
   images: { unoptimized: true },
+  experimental: {
+    // Screenshots for AI analysis are shrunk in the browser first (~200-600 KB);
+    // 2 MB leaves headroom over the 1 MB default.
+    serverActions: { bodySizeLimit: "2mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

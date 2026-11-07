@@ -3,7 +3,7 @@
 Victim-first scam help for India: emergency steps, lookup of reported phone
 numbers / UPI IDs / links, AI scam check, and complaint text generation.
 
-> Status: **Phase 3** (report wizard, evidence uploads, complaint text and PDF, dashboard). See `CLAUDE.md` for architecture
+> Status: **Phase 4** (AI message and screenshot checker, on top of reports, lookup and emergency help). See `CLAUDE.md` for architecture
 > and conventions. This README grows with each phase.
 
 ---
@@ -97,6 +97,31 @@ pnpm storage:check
 ```
 
 All 8 checks should say PASS. Two of them prove R2 rejects a tampered upload.
+
+### Try Phase 4
+
+The AI checker needs a free Gemini API key: https://aistudio.google.com/apikey
+(sign in with a Google account, "Create API key"). Put it in `.env.local` as
+`GEMINI_API_KEY=...`, then check it works:
+
+```bash
+pnpm ai:check
+```
+
+It sends one fake scam SMS (English and Hindi) through the app's own AI code
+and prints the result. If the model id is wrong it lists the models your key
+can use; set one as `GEMINI_MODEL`.
+
+Then open http://localhost:3000/en/analyse:
+
+- Paste a scam message, e.g. `Dear Rahul, your SBI account will be blocked today. Update KYC at http://sbi-kyc-verify.test or call 6000000101. OTP 482913`.
+  The result raises the risk because `6000000101` is reported in the seed data.
+  Open "What we sent to the AI" to see that the name and OTP were removed.
+- Switch to "Screenshot", pick an image, and tap "Analyse this screenshot".
+  Nothing is sent until you tap.
+- "Report this" opens the report wizard already filled in.
+
+Without a key, the page says the AI checker isn't available; everything else works.
 
 ### Run on the real Cloudflare runtime locally
 
@@ -245,6 +270,12 @@ pnpm wrangler secret put SUPABASE_SECRET_KEY
 
 ```bash
 pnpm wrangler secret put CRON_SECRET
+```
+
+The Gemini key (step "Try Phase 4"):
+
+```bash
+pnpm wrangler secret put GEMINI_API_KEY
 ```
 
 Then the four R2 values from step 2.2, one at a time:

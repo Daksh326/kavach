@@ -24,7 +24,11 @@ export function RadioCard({
 }: ComponentProps<"input"> & { label: ReactNode }) {
   return (
     <label className={cn("relative block cursor-pointer", className)}>
-      <input type="radio" className="peer absolute left-4 top-1/2 size-5 -translate-y-1/2 accent-[var(--primary)]" {...props} />
+      <input
+        type="radio"
+        className="peer absolute left-4 top-1/2 size-5 -translate-y-1/2 accent-[var(--primary)]"
+        {...props}
+      />
       <span className="flex min-h-12 items-center rounded-lg border bg-card py-2 pl-12 pr-4 text-base peer-checked:border-primary peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
         {label}
       </span>

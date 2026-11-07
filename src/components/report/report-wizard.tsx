@@ -48,6 +48,7 @@ import {
   type PrepareIssue,
 } from "@/lib/report/evidence-client";
 import { emptyReportForm, reportFormSchema, type ReportFormValues } from "@/lib/validation/report";
+import { clearReportPrefill, readReportPrefill } from "@/lib/report/prefill";
 import { getSessionStatus, submitReport } from "@/app/[locale]/report/actions";
 import { FieldError, RadioCard, selectClass } from "./fields";
 
@@ -113,6 +114,18 @@ function initialState() {
       { type: type as ReportIdentifierType, value, platform: "instagram" },
     ];
   }
+  // One-shot handoff from /analyse "Report this" (cleared after mount).
+  const prefill = readReportPrefill();
+  if (prefill) {
+    if (!values.category && prefill.category) values.category = prefill.category;
+    if (!values.description && prefill.description) values.description = prefill.description;
+    for (const id of prefill.identifiers ?? []) {
+      if (values.identifiers.length >= 10) break;
+      if (!values.identifiers.some((i) => i.value === id.value)) {
+        values.identifiers = [...values.identifiers, { ...id, platform: "instagram" }];
+      }
+    }
+  }
   const resume = params.get("resume") === "1";
   return {
     values,
@@ -176,6 +189,8 @@ export function ReportWizard() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [save]);
+
+  useEffect(() => clearReportPrefill(), []);
 
   useEffect(() => {
     let cancelled = false;
