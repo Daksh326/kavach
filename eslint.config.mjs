@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     "messages/*.d.json.ts",
     ".open-next/**",
     ".wrangler/**",
+    // Plain-Node test harness (CommonJS)
+    "e2e/**",
   ]),
 ]);
 

@@ -25,7 +25,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "storage:check": "node --env-file=.env.local --conditions=react-server --import tsx scripts/r2-check.ts",
-    "ai:check": "node --env-file=.env.local --conditions=react-server --import tsx scripts/ai-check.ts"
+    "ai:check": "node --env-file=.env.local --conditions=react-server --import tsx scripts/ai-check.ts",
+    "e2e": "node e2e/run.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.1",
