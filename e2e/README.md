@@ -1,99 +1,71 @@
-# End-to-end tests
+# End-to-end tests (Playwright)
 
-Four browser suites (Playwright) that drive the **built Cloudflare Worker**
-(`pnpm cf:preview`, not `next dev`) the way a user would. Every external
-service runs as a local stand-in, so no accounts or network access are needed.
+Four suites that drive the **built Cloudflare Worker** the way a user would, with
+local stand-ins for every external service, so no accounts or network access
+are needed. They also run in GitHub Actions on every push (`.github/workflows/ci.yml`).
 
-| Suite | Covers | Checks |
-|---|---|---|
-| `phase2.cjs` | home, emergency checklist, `/check` lookups (en + hi), no horizontal scroll at 360px | 29 |
-| `phase3.cjs` | report wizard (signed out → sign-in → submit), evidence upload/download, complaint text, PDF, status, export, delete report, delete account | 46 |
-| `phase4.cjs` | AI checker: redaction before the AI, caching, errors, screenshots, "Report this" | 38 |
-| `phase5.cjs` | Turnstile, flags, admin moderation + merge, daily job, Sentry/PostHog privacy, offline mode, rate limits | 38 |
+| File | Covers |
+|---|---|
+| `tests/01-lookup.spec.cjs` | home, emergency checklist, `/check` lookups (en + hi), no sideways scroll at 360px |
+| `tests/02-report.spec.cjs` | report wizard (signed out → sign-in → submit), evidence upload/download, complaint text, PDF, status, export, deleting a report and an account |
+| `tests/03-analyse.spec.cjs` | AI checker: redaction before the AI, cache, errors, screenshots, "Report this" |
+| `tests/04-safety.spec.cjs` | Turnstile, flags, admin moderation + merge, daily job, Sentry/PostHog privacy, offline mode, rate limits |
+
+Each suite is one Playwright test made of many named checks (soft assertions):
+every failed check is listed in the report and the suite keeps going.
 
 ## One-time setup
 
-You need Docker (already used for Supabase), Node 22 and Python 3.
+Docker (already used for Supabase), Node 22, Python 3. Mac/Linux shell, or Git Bash/WSL on Windows.
 
-1. Browser for Playwright:
+```bash
+pnpm exec playwright install chromium
+```
 
-   ```bash
-   pnpm dlx playwright@1 install chromium
-   ```
-
-2. Redis plus an Upstash-compatible REST endpoint:
-
-   ```bash
-   docker network create kavach-rl
-   ```
-
-   ```bash
-   docker run -d --name kavach-redis --network kavach-rl redis:8-alpine
-   ```
-
-   ```bash
-   docker run -d --name kavach-srh --network kavach-rl -p 127.0.0.1:8079:80 -e SRH_MODE=env -e SRH_TOKEN=local-upstash-token -e SRH_CONNECTION_STRING=redis://kavach-redis:6379 hiett/serverless-redis-http:latest
-   ```
-
-3. S3 emulator standing in for R2:
-
-   ```bash
-   python3 -m pip install "moto[server]"
-   ```
-
-4. Append `e2e/env.e2e.example` to both `.env.local` and `.dev.vars`
-   (remove any earlier lines with the same names).
+```bash
+python3 -m pip install "moto[server]"
+```
 
 ## Each run
-
-Start these in separate terminals and leave them running:
 
 ```bash
 pnpm db:start
 ```
 
 ```bash
-moto_server -H 127.0.0.1 -p 9100
+sh e2e/start-redis.sh
+```
+
+`setup-env.sh` **overwrites** `.env.local` and `.dev.vars` with test settings
+(local Supabase keys plus every stand-in). Back them up first if you changed them.
+
+```bash
+sh e2e/setup-env.sh
 ```
 
 ```bash
-node e2e/fakes/fake-gemini.cjs
+pnpm cf:build
 ```
-
-```bash
-node e2e/fakes/fake-services.cjs
-```
-
-```bash
-node scripts/dev/upstash-shim.mjs
-```
-
-```bash
-pnpm cf:preview
-```
-
-Create the emulator bucket once per moto start:
-
-```bash
-R2_CHECK_CREATE_BUCKET=1 pnpm storage:check
-```
-
-Then run all suites (or name some, e.g. `pnpm e2e phase2 phase4`):
 
 ```bash
 pnpm e2e
 ```
 
-Screenshots and downloaded files land in `e2e/output/` (git-ignored).
+Playwright starts the stand-ins (`e2e/fakes/`), the S3 emulator, the Upstash
+shim and the Worker preview, and stops them at the end. Don't run
+`pnpm cf:preview` yourself at the same time: if port 8787 is already taken,
+Playwright reuses that server, and a long-running worker remembers rate-limit
+blocks from earlier runs. To see the HTML report:
 
-## Notes
+```bash
+pnpm e2e:report
+```
 
-- Each suite starts from a fresh `pnpm db:reset`, which `pnpm e2e` does for you.
-- Restart `pnpm cf:preview` before re-running `phase5`: it deliberately hits
-  rate limits, and the running worker remembers blocked keys in memory.
-- The fakes record what they receive (`GET http://127.0.0.1:9200/__state`,
-  `GET http://127.0.0.1:9300/__state`), which is how the suites prove, for
-  example, that an OTP never reached the AI.
-- What the fakes can't prove (signed-URL acceptance and tamper rejection by
-  real R2, the real Gemini model, the real Turnstile widget) is covered by
-  `pnpm storage:check`, `pnpm ai:check` and the checks in README section 2.6.
+Run one suite with `pnpm e2e 03-analyse`. If `moto_server` isn't on your PATH,
+set `MOTO_SERVER=/path/to/moto_server`.
+
+## What the stand-ins can't prove
+
+Signed-URL acceptance and tamper rejection by real R2, the real Gemini model and
+the real Turnstile widget. Those are covered by `pnpm storage:check`,
+`pnpm ai:check` and the checks in README section 2.6.

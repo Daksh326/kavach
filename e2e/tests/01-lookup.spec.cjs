@@ -1,10 +1,7 @@
-const { chromium } = require('playwright');
-const DIR = require('node:path').join(__dirname, 'output');
-require('node:fs').mkdirSync(DIR, { recursive: true });
-const BASE = process.argv[2] || 'http://127.0.0.1:8787';
-const results = [];
-const check = (name, cond, extra = '') => { results.push([cond ? 'PASS' : 'FAIL', name, extra]); };
-
+// Converted from the phase scripts used during development. Each check() is a soft
+// assertion: failures are all reported and the flow continues.
+const { test } = require('@playwright/test');
+const { BASE, MAIL, FAKE_GEMINI, FAKE_SERVICES, DIR, check, psql, sleep, resetState, otpCode } = require('./helpers.cjs');
 async function lookup(page, q) {
   await page.goto(`${BASE}/en/check`);
   await page.fill('#check-q', q);
@@ -14,8 +11,12 @@ async function lookup(page, q) {
   return (await page.locator('main').innerText());
 }
 
-(async () => {
-  const browser = await chromium.launch();
+test.describe.configure({ mode: 'serial' });
+
+test('Phase 2: home, emergency steps, lookups (en + hi)', async ({ browser }) => {
+  test.setTimeout(15 * 60_000);
+  await resetState();
+
   const page = await browser.newPage({ viewport: { width: 360, height: 740 } });
   const errors = [];
   page.on('console', m => m.type() === 'error' && errors.push(m.text()));
@@ -105,7 +106,4 @@ async function lookup(page, q) {
   await page.screenshot({ path: DIR + '/home.png', fullPage: true });
 
   check('no console errors', errors.length === 0, errors.join(' | '));
-  await browser.close();
-  for (const r of results) console.log(r.filter(Boolean).join('  '));
-  process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
-})().catch(e => { console.error('CRASH', e.message); process.exit(1); });
+});

@@ -1,26 +1,14 @@
-const { chromium } = require('playwright');
+// Converted from the phase scripts used during development. Each check() is a soft
+// assertion: failures are all reported and the flow continues.
+const { test } = require('@playwright/test');
+const { BASE, MAIL, FAKE_GEMINI, FAKE_SERVICES, DIR, check, psql, sleep, resetState, otpCode } = require('./helpers.cjs');
 const { execFileSync, execSync } = require('node:child_process');
-const BASE = 'http://127.0.0.1:8787';
-const FAKE = 'http://127.0.0.1:9300';
-const MAIL = 'http://127.0.0.1:54324';
+const FAKE = FAKE_SERVICES;
 const CRON = 'local-dev-cron-secret-0123456789abcdef';
-const DIR = require('node:path').join(__dirname, 'output');
-require('node:fs').mkdirSync(DIR, { recursive: true });
-const results = [];
-const check = (name, cond, extra = '') => results.push([cond ? 'PASS' : 'FAIL', name, extra]);
-const psql = (q) => execFileSync('docker', ['exec', 'supabase_db_kavach', 'psql', '-U', 'postgres', '-d', 'postgres', '-X', '-q', '-t', '-A', '-c', q]).toString().trim();
 const state = async () => (await fetch(`${FAKE}/__state`)).json();
 const lookupPublic = (type, value) => psql(`select is_reported from lookup_identifier('${type}','${value}')`) === 't';
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function code(email) {
-  for (let i = 0; i < 30; i++) {
-    const l = await (await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent('to:' + email)}`)).json();
-    if (l.messages?.[0]) { const m = await (await fetch(`${MAIL}/api/v1/message/${l.messages[0].ID}`)).json(); const c = (m.Text || '').match(/\b(\d{6})\b/); if (c) return c[1]; }
-    await sleep(400);
-  }
-  throw new Error('no otp');
-}
+const code = otpCode;
 async function signIn(page, email) {
   await fetch(`${MAIL}/api/v1/messages`, { method: 'DELETE' });
   await page.goto(`${BASE}/en/login`);
@@ -32,13 +20,14 @@ async function signIn(page, email) {
   await page.waitForURL((u) => u.pathname === '/en/dashboard', { timeout: 15000 });
 }
 
-(async () => {
-  execFileSync('docker', ['exec', 'kavach-redis', 'redis-cli', 'FLUSHALL']);
-  await fetch(`${FAKE}/__reset`, { method: 'POST' });
-  const browser = await chromium.launch();
+test.describe.configure({ mode: 'serial' });
+
+test('Phase 5: Turnstile, flags, admin, cron, monitoring, offline, rate limits', async ({ browser }) => {
+  test.setTimeout(15 * 60_000);
+  await resetState();
+
   const ctx = await browser.newContext({ viewport: { width: 360, height: 760 } });
   const page = await ctx.newPage();
-  global.__page = page;
   const errors = [];
   page.on('pageerror', (e) => { if (!e.message.includes('client boom')) errors.push(e.message); }); // that one is thrown on purpose
 
@@ -106,7 +95,6 @@ async function signIn(page, email) {
   await page.waitForSelector('button:has-text("Hide from public lookup")');
   check('unhide: back in public lookup', lookupPublic('phone', '+916000000101'));
   const targetId = new URL(page.url()).pathname.split('/').pop();
-  await page.fill('input[name=q]', '').catch(() => {});
   const dupId = psql(`select id from identifiers where value_normalized='+916000000202'`);
   await page.goto(`${BASE}/en/admin/identifier/${dupId}`);
   await page.fill('input[aria-label="Correct value"]', '60000 00101');
@@ -227,12 +215,4 @@ async function signIn(page, email) {
   execFileSync('docker', ['exec', 'kavach-redis', 'redis-cli', 'FLUSHALL']);
 
   check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
-  await browser.close();
-  for (const r of results) console.log(r.filter(Boolean).join('  '));
-  process.exit(results.some((r) => r[0] === 'FAIL') ? 1 : 0);
-})().catch(async (e) => {
-  for (const r of results) console.log(r.filter(Boolean).join('  '));
-  console.error('CRASH', e.message.split('\n')[0]);
-  try { console.error('AT', global.__page.url(), JSON.stringify((await global.__page.locator('main').innerText()).slice(0, 400))); } catch {}
-  process.exit(1);
 });

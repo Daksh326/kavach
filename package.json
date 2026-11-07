@@ -26,7 +26,8 @@
     "test:watch": "vitest",
     "storage:check": "node --env-file=.env.local --conditions=react-server --import tsx scripts/r2-check.ts",
     "ai:check": "node --env-file=.env.local --conditions=react-server --import tsx scripts/ai-check.ts",
-    "e2e": "node e2e/run.cjs"
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report e2e/report"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.1",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.15",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

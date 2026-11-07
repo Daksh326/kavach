@@ -62,3 +62,4 @@ r2-cors.json
 
 # end-to-end test artefacts
 e2e/output/
+e2e/report/

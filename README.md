@@ -426,12 +426,17 @@ deploy again.
 
 ## 3. Tests
 
+GitHub Actions (`.github/workflows/ci.yml`) runs all of these except the two
+`:check` commands on every push to `main` and on pull requests: lint, types
+and unit tests, then the database tests, then the end-to-end suites (HTML
+report attached to the run as `e2e-report`).
+
 | Command | What it runs |
 |---|---|
 | `pnpm check` | TypeScript + ESLint |
 | `pnpm test` | 111 unit tests (Vitest): normalisation, redaction, complaint text, AI provider, rate limits, Turnstile, monitoring |
 | `pnpm db:test` | 31 database security tests (pgTAP): RLS, grants, public lookup threshold, deletion cascades |
-| `pnpm e2e` | 151 browser checks on the built Worker, with local stand-ins for every external service. Setup: `e2e/README.md` |
+| `pnpm e2e` | 4 Playwright suites (151 checks) on the built Worker, with local stand-ins for every external service. Setup: `e2e/README.md` |
 | `pnpm storage:check` | your real R2 bucket: signed uploads, tamper rejection, download, delete |
 | `pnpm ai:check` | your real Gemini key, in English and Hindi |
 

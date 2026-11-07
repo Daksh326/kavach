@@ -1,28 +1,14 @@
-const { chromium } = require('playwright');
+// Converted from the phase scripts used during development. Each check() is a soft
+// assertion: failures are all reported and the flow continues.
+const { test } = require('@playwright/test');
+const { BASE, MAIL, FAKE_GEMINI, FAKE_SERVICES, DIR, check, psql, sleep, resetState, otpCode } = require('./helpers.cjs');
+const { execFileSync, execSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const { execFileSync, execSync } = require('node:child_process');
-const BASE = 'http://127.0.0.1:8787';
-const MAIL = 'http://127.0.0.1:54324';
 const S3 = 'http://127.0.0.1:9100/kavach-evidence';
-const DIR = require('node:path').join(__dirname, 'output');
-require('node:fs').mkdirSync(DIR, { recursive: true });
-const results = [];
-const check = (name, cond, extra = '') => results.push([cond ? 'PASS' : 'FAIL', name, extra]);
 const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
-const psql = (q) => execFileSync('docker', ['exec', 'supabase_db_kavach', 'psql', '-U', 'postgres', '-d', 'postgres', '-X', '-q', '-t', '-A', '-c', q]).toString().trim();
 
-async function code(email) {
-  for (let i = 0; i < 30; i++) {
-    const l = await (await fetch(`${MAIL}/api/v1/search?query=${encodeURIComponent('to:' + email)}`)).json();
-    if (l.messages?.[0]) {
-      const m = await (await fetch(`${MAIL}/api/v1/message/${l.messages[0].ID}`)).json();
-      const c = (m.Text || '').match(/\b(\d{6})\b/); if (c) return c[1];
-    }
-    await new Promise(r => setTimeout(r, 400));
-  }
-  throw new Error('no otp');
-}
+const code = otpCode;
 async function signIn(page, email) {
   await page.fill('#email', email);
   await page.click('button[type=submit]');
@@ -31,9 +17,13 @@ async function signIn(page, email) {
 }
 const next = (page) => page.click('form button[type=submit]');
 
-(async () => {
+test.describe.configure({ mode: 'serial' });
+
+test('Phase 3: report wizard, evidence, complaint text, PDF, dashboard', async ({ browser }) => {
+  test.setTimeout(15 * 60_000);
+  await resetState();
+
   await fetch(`${MAIL}/api/v1/messages`, { method: 'DELETE' });
-  const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 360, height: 760 }, acceptDownloads: true });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
   const page = await ctx.newPage();
@@ -242,7 +232,4 @@ const next = (page) => page.click('form button[type=submit]');
   check('signed out after deletion', new URL(page.url()).pathname === '/en/login');
 
   check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
-  await browser.close();
-  for (const r of results) console.log(r.filter(Boolean).join('  '));
-  process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
-})().catch(e => { for (const r of results) console.log(r.filter(Boolean).join('  ')); console.error('CRASH', e.message.split('\n')[0]); process.exit(1); });
+});

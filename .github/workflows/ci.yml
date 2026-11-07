@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SUPABASE_EXCLUDE: studio,imgproxy,vector,logflare,supavisor,realtime,storage-api,edge-runtime,postgres-meta
+
+jobs:
+  check:
+    name: Lint, types, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test
+
+  database:
+    name: Database security tests (pgTAP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start -x "$SUPABASE_EXCLUDE"
+      - run: pnpm db:test
+
+  e2e:
+    name: End-to-end (built Worker)
+    needs: [check, database]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec supabase start -x "$SUPABASE_EXCLUDE"
+      - run: sh e2e/start-redis.sh
+      - run: python3 -m pip install --user "moto[server]"
+      - run: sh e2e/setup-env.sh
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm cf:build
+      - run: pnpm e2e
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: e2e/report
+          retention-days: 14

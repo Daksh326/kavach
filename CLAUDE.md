@@ -29,7 +29,7 @@ pnpm db:reset            # re-apply all migrations + supabase/seed.sql
 pnpm db:test             # pgTAP RLS tests in supabase/tests
 pnpm db:new <name>       # new migration file
 pnpm db:types            # regenerate src/lib/supabase/database.types.ts (local DB)
-pnpm e2e                 # browser suites against `pnpm cf:preview` (setup: e2e/README.md)
+pnpm e2e                 # Playwright suites on the built Worker (pnpm cf:build first; setup: e2e/README.md)
 pnpm storage:check       # end-to-end check of the R2 config in .env.local (upload, tamper, download, delete)
 pnpm ai:check            # real Gemini call with the key in .env.local (en + hi); lists models if the id is wrong
 ```
@@ -79,6 +79,10 @@ src/lib/analytics/track.ts      PostHog capture API, anonymous events only
 src/i18n/client-messages.tsx    <ClientMessages namespaces> = only what client islands need
 public/sw.js, public/_headers   service worker (offline emergency pages), static asset headers
 scripts/dev/upstash-shim.mjs    lets open-source Redis run @upstash/ratelimit scripts (tests)
+e2e/tests/*.spec.cjs            Playwright suites (soft-assert check() per named check), helpers.cjs
+e2e/fakes/                      stand-ins for Gemini, Turnstile, Sentry, PostHog (record what they receive)
+e2e/setup-env.sh, start-redis.sh  test env + Redis/Upstash proxy (used by CI too)
+.github/workflows/ci.yml        CI: check+unit -> pgTAP -> E2E
 scripts/r2-check.ts             storage setup checker
 public/fonts/                   Noto Sans + Noto Sans Devanagari (OFL) for the PDF only
 src/components/ui/              shadcn components (generated; edit sparingly)
@@ -219,9 +223,10 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
   populates it — plain `wrangler dev` does not.
 - `input-otp` fires `onComplete` only when the value grows to full length —
   clear the value after a failed attempt.
-- **Worker size budget (free plan: 3 MiB gzip).** Currently ~2.18 MiB. The
-  message catalogs are duplicated across several server chunks (~100 KB gz):
-  the first thing to dedupe if the budget gets tight. Next's
+- **Worker size budget (free plan: 3 MiB gzip).** Currently ~2.18 MiB, mostly
+  Next itself. Each message catalog is bundled twice (RSC + SSR layers,
+  ~21 KB gz extra in total); not worth restructuring unless the budget is
+  nearly spent (it would mean loading catalogs from static assets). Next's
   server build traces even click-time `import()`s in client components. Heavy
   browser-only libraries (react-pdf, ~1.7 MB) must be reached only through a
   `next/dynamic(..., { ssr: false })` boundary (see `pdf-button-loader.tsx`).
@@ -264,6 +269,6 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
    identifier lookup + risk floor, "Report this" prefill; `pnpm ai:check`
 5. ✅ Admin moderation + flags, Turnstile (fail closed), Upstash rate limits (fail open),
    PWA + offline emergency pages, Sentry + PostHog (lightweight, no PII), daily cron jobs
-6. ✅ (lean) E2E suites committed (e2e/, `pnpm e2e`, local fakes), README complete.
-   Not done: deploying (user runs README section 2), converting e2e/*.cjs to
-   @playwright/test, deduplicating message catalogs in the server bundle.
+6. ✅ Playwright E2E suites (e2e/tests, `pnpm e2e`, local stand-ins started by
+   playwright.config.ts), GitHub Actions CI (lint/types/unit, pgTAP, E2E), README.
+   Not done: deploying (user runs README section 2).
