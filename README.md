@@ -1,11 +1,31 @@
 # Kavach
 
-Victim-first scam help for India: emergency steps, lookup of reported phone
-numbers / UPI IDs / links, AI scam check, and complaint text generation.
+Victim-first scam help for India: a mobile-first, installable web app (English
+and Hindi) for people who were scammed or received a suspicious call, message
+or payment request.
 
-> Status: **Phase 5** (moderation, abuse protection, offline mode, monitoring), on top of
-> reports, lookup, the AI checker and emergency help. See `CLAUDE.md` for architecture
-> and conventions. This README grows with each phase.
+**What it does**
+
+- **Emergency steps** (`/emergency`): the first-hour checklist (1930,
+  cybercrime.gov.in, bank, Sanchar Saathi/Chakshu, evidence). Works offline.
+- **Check** (`/check`): look up a phone number, UPI ID, link or email against
+  other users' reports. Reported by users, not verified; shown only after 2+
+  different people report the same thing; reporters are never shown.
+- **AI checker** (`/analyse`): paste a message or share a screenshot; Gemini
+  rates the scam risk and explains why. Personal details are removed first.
+- **Report** (`/report`): a step-by-step wizard with evidence uploads, then
+  ready-to-paste complaint text for cybercrime.gov.in and your bank, and a PDF.
+  Kavach never files anything for you.
+- **My reports** (`/dashboard`): status tracking, data export, full deletion.
+- **Moderation** (`/admin`): flags, hiding entries, merging duplicates.
+
+**Built with** Next.js 16 on Cloudflare Workers (OpenNext), Supabase
+(Postgres + Auth, row-level security on every table), Cloudflare R2, Google
+Gemini, Turnstile, Upstash, Sentry and PostHog, all on free tiers.
+`CLAUDE.md` describes the architecture, conventions and platform gotchas.
+
+> Status: **all 6 phases done.** Deploying is the remaining step: follow
+> section 2 below.
 
 ---
 
@@ -13,6 +33,13 @@ numbers / UPI IDs / links, AI scam check, and complaint text generation.
 
 Prerequisites: **Node 22 LTS** (20.9+ works), **pnpm 10** (`corepack enable`),
 **Docker** (Docker Desktop on macOS/Windows) for the local Supabase stack.
+
+> **Windows:** if `corepack enable` fails with EPERM, run `npm install -g pnpm`
+> instead. If PowerShell says "running scripts is disabled", run
+> `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once,
+> or use Command Prompt. In Command Prompt use `copy` instead of `cp`.
+> Docker Desktop needs WSL 2; if image pulls fail with "read-only file
+> system", quit Docker Desktop, run `wsl --shutdown`, and start it again.
 
 ```bash
 pnpm install
@@ -394,6 +421,19 @@ deploy again.
 - **PostHog**: open a few pages; events appear under Activity in a minute or two.
 - **Offline**: on your phone, open the site once, turn on airplane mode, and
   open it again. The emergency steps should still load.
+
+---
+
+## 3. Tests
+
+| Command | What it runs |
+|---|---|
+| `pnpm check` | TypeScript + ESLint |
+| `pnpm test` | 111 unit tests (Vitest): normalisation, redaction, complaint text, AI provider, rate limits, Turnstile, monitoring |
+| `pnpm db:test` | 31 database security tests (pgTAP): RLS, grants, public lookup threshold, deletion cascades |
+| `pnpm e2e` | 151 browser checks on the built Worker, with local stand-ins for every external service. Setup: `e2e/README.md` |
+| `pnpm storage:check` | your real R2 bucket: signed uploads, tamper rejection, download, delete |
+| `pnpm ai:check` | your real Gemini key, in English and Hindi |
 
 ---
 

@@ -29,6 +29,7 @@ pnpm db:reset            # re-apply all migrations + supabase/seed.sql
 pnpm db:test             # pgTAP RLS tests in supabase/tests
 pnpm db:new <name>       # new migration file
 pnpm db:types            # regenerate src/lib/supabase/database.types.ts (local DB)
+pnpm e2e                 # browser suites against `pnpm cf:preview` (setup: e2e/README.md)
 pnpm storage:check       # end-to-end check of the R2 config in .env.local (upload, tamper, download, delete)
 pnpm ai:check            # real Gemini call with the key in .env.local (en + hi); lists models if the id is wrong
 ```
@@ -263,4 +264,6 @@ custom-worker.ts                Worker entry: OpenNext fetch + Cron scheduled()
    identifier lookup + risk floor, "Report this" prefill; `pnpm ai:check`
 5. ✅ Admin moderation + flags, Turnstile (fail closed), Upstash rate limits (fail open),
    PWA + offline emergency pages, Sentry + PostHog (lightweight, no PII), daily cron jobs
-6. ⏳ Vitest/Playwright suites, deploy, full README
+6. ✅ (lean) E2E suites committed (e2e/, `pnpm e2e`, local fakes), README complete.
+   Not done: deploying (user runs README section 2), converting e2e/*.cjs to
+   @playwright/test, deduplicating message catalogs in the server bundle.
